@@ -143,6 +143,8 @@ void configureLEDDriver();
 float* getADCValues();
 void uartTransmitFloat(float *number, int uart);
 uint8_t *getInputGPIOState(void);
+void setOutputGPIOState(int gpio, int state);
+void outputGPIOBufInitialization();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -295,6 +297,7 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   /* USER CODE BEGIN 2 */
   //HAL_ADC_ConfigChannel();
+  outputGPIOBufInitialization();
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
@@ -1534,6 +1537,83 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void outputGPIOBufInitialization(){
+	memset(gpioOutputState,0,sizeof(gpioOutputState));
+}
+
+void setOutputGPIOState(int gpio, int state){
+
+	if(gpio == outputGPIOs.configOut_0){
+		HAL_GPIO_WritePin(GPIOH,OUT0_CONFIG_Pin,state);
+		gpioOutputState[outputGPIOs.configOut_0] = state;
+	}
+
+	else if(gpio == outputGPIOs.configOut_1){
+		HAL_GPIO_WritePin(GPIOI,OUT1_CONFIG_Pin,state);
+		gpioOutputState[outputGPIOs.configOut_1] = state;
+	}
+
+	else if(gpio == outputGPIOs.configOut_2){
+		HAL_GPIO_WritePin(GPIOI,OUT2_CONFIG_Pin,state);
+		gpioOutputState[outputGPIOs.configOut_2] = state;
+	}
+
+	else if(gpio == outputGPIOs.configOut_3){
+		HAL_GPIO_WritePin(GPIOI,OUT3_CONFIG_Pin,state);
+		gpioOutputState[outputGPIOs.configOut_3] = state;
+	}
+
+	else if(gpio == outputGPIOs.mcu3V3_0){
+		HAL_GPIO_WritePin(GPIOJ,MCU_CTRL0_Pin,state);
+		gpioOutputState[outputGPIOs.mcu3V3_0] = state;
+	}
+
+	else if(gpio == outputGPIOs.mcu3V3_1){
+		HAL_GPIO_WritePin(GPIOK,MCU_CTRL1_Pin,state);
+		gpioOutputState[outputGPIOs.mcu3V3_1] = state;
+	}
+
+	else if(gpio == outputGPIOs.mcu3V3_2){
+		HAL_GPIO_WritePin(GPIOK,MCU_CTRL2_Pin,state);
+		gpioOutputState[outputGPIOs.mcu3V3_2] = state;
+	}
+
+	else if(gpio == outputGPIOs.mcu3V3_3){
+		HAL_GPIO_WritePin(GPIOJ,UART_MUX_CTRL_Pin,state);
+		gpioOutputState[outputGPIOs.mcu3V3_3] = state;
+	}
+
+	else if(gpio == outputGPIOs.out1V8_0){
+		HAL_GPIO_WritePin(GPIOG,OUT0_1V8_Pin,state);
+		gpioOutputState[outputGPIOs.out1V8_0] = state;
+	}
+
+	else if(gpio == outputGPIOs.out1V8_1){
+		HAL_GPIO_WritePin(GPIOG,OUT1_1V8_Pin,state);
+		gpioOutputState[outputGPIOs.out1V8_1] = state;
+	}
+
+	else if(gpio == outputGPIOs.out1V8_2){
+		HAL_GPIO_WritePin(GPIOG,OUT2_1V8_Pin,state);
+		gpioOutputState[outputGPIOs.out1V8_2] = state;
+	}
+
+	else if(gpio == outputGPIOs.out1V8_3){
+		HAL_GPIO_WritePin(GPIOG,OUT3_1V8_Pin,state);
+		gpioOutputState[outputGPIOs.out1V8_3] = state;
+	}
+
+	else if(gpio == outputGPIOs.odOut_0){
+		HAL_GPIO_WritePin(GPIOG,OUT0_OD_Pin,state);
+		gpioOutputState[outputGPIOs.odOut_0] = state;
+	}
+
+	else if(gpio == outputGPIOs.odOut_1){
+		HAL_GPIO_WritePin(GPIOG,OUT1_OD_Pin,state);
+		gpioOutputState[outputGPIOs.odOut_1] = state;
+	}
+}
+
 void uartTransmitChar(char *message, int uart){
 	char uart_buf[200];
 	int uart_buf_len;
@@ -1649,7 +1729,6 @@ void configureLEDDriver(){
 	writeI2CRegister(LED.address,LED.led7_pwm,LED.pwm,1,LED.i2cBank);
 	writeI2CRegister(LED.address,LED.led8_pwm,LED.pwm,1,LED.i2cBank);
 	writeI2CRegister(LED.address,LED.led9_pwm,LED.pwm,1,LED.i2cBank);
-
 }
 
 //Configures specified LED to either fully on or off.
@@ -1765,20 +1844,40 @@ float* getADCValues(){
 	int adc2DataRepeat=8;
 	int adc3DataRepeat=12;
 	for(adcChannelCounter=0;adcChannelCounter<20;adcChannelCounter++){
+		if((adcChannelCounter==Adc.adc0) || (adcChannelCounter==Adc.adc2) || (adcChannelCounter==Adc.adc3)){
+			adcIndex=0;
+		}
+		else if((adcChannelCounter==Adc.adc1) || (adcChannelCounter==Adc.adc14) || (adcChannelCounter==Adc.adc4)){
+			adcIndex=2;
+		}
+		else if((adcChannelCounter==Adc.spareSpiADC) || (adcChannelCounter==Adc.adc15) || (adcChannelCounter==Adc.adc5)){
+			adcIndex=4;
+		}
+		else if((adcChannelCounter == Adc.spareUartADC) || (adcChannelCounter==Adc.configADC) || (adcChannelCounter==Adc.adc6)){
+			adcIndex=6;
+		}
+		else if((adcChannelCounter==Adc.zionADC) || (adcChannelCounter==Adc.adc7)){
+			adcIndex=8;
+		}
+		else if((adcChannelCounter == Adc.spareI2cADC) || (adcChannelCounter==Adc.adc8)){
+			adcIndex=10;
+		}
+		else if(adcChannelCounter==Adc.adc9){
+			adcIndex=12;
+		}
+		else if(adcChannelCounter==Adc.adc10){
+			adcIndex=14;
+		}
+		else if(adcChannelCounter==Adc.adc11){
+			adcIndex=16;
+		}
+		else if(adcChannelCounter==Adc.adc12){
+			adcIndex=18;
+		}
+		else{
+			adcIndex=20;
+		}
 		if((adcChannelCounter == Adc.adc0) || (adcChannelCounter == Adc.adc1) || (adcChannelCounter == Adc.spareSpiADC) || (adcChannelCounter == Adc.spareUartADC)){
-			if(adcChannelCounter==Adc.adc0){
-				adcIndex=0;
-			}
-			else if(adcChannelCounter==Adc.adc1){
-				adcIndex=2;
-			}
-			else if(adcChannelCounter==Adc.spareSpiADC){
-				adcIndex=4;
-			}
-			else{
-				adcIndex=6;
-			}
-
 			for(avgCounter=0;avgCounter<ADC_AVG_COUNT;avgCounter++){
 				int shiftedIndex = adcIndex + (adc2DataRepeat*avgCounter);
 				avgADCCounterValues[adcChannelCounter]+=adc2_buf[shiftedIndex];
@@ -1788,74 +1887,23 @@ float* getADCValues(){
 			}
 		}
 		else if((adcChannelCounter == Adc.adc2) || (adcChannelCounter == Adc.adc14) || (adcChannelCounter == Adc.adc15) || (adcChannelCounter == Adc.configADC) || (adcChannelCounter == Adc.zionADC) || (adcChannelCounter == Adc.spareI2cADC)){
-			if(adcChannelCounter==Adc.adc2){
-				adcIndex=0;
-			}
-			else if(adcChannelCounter==Adc.adc14){
-				adcIndex=2;
-			}
-			else if(adcChannelCounter==Adc.adc15){
-				adcIndex=4;
-			}
-			else if(adcChannelCounter==Adc.configADC){
-				adcIndex=6;
-			}
-			else if(adcChannelCounter==Adc.zionADC){
-				adcIndex=8;
-			}
-			else{
-				adcIndex=10;
-			}
-
 			for(avgCounter=0;avgCounter<ADC_AVG_COUNT;avgCounter++){
-				avgADCCounterValues[adcChannelCounter]+=adc3_buf[adcIndex + (adc3DataRepeat*avgCounter)];
+				int shiftedIndex = adcIndex + (adc3DataRepeat*avgCounter);
+				avgADCCounterValues[adcChannelCounter]+=adc3_buf[shiftedIndex];
 				if (avgCounter == (ADC_AVG_COUNT-1)){
 					avgADCCounterValues[adcChannelCounter] = avgADCCounterValues[adcChannelCounter]/ADC_AVG_COUNT;
 				}
 			}
 		}
 		else{
-			if(adcChannelCounter==Adc.adc3){
-				adcIndex=0;
-			}
-			else if(adcChannelCounter==Adc.adc4){
-				adcIndex=2;
-			}
-			else if(adcChannelCounter==Adc.adc5){
-				adcIndex=4;
-			}
-			else if(adcChannelCounter==Adc.adc6){
-				adcIndex=6;
-			}
-			else if(adcChannelCounter==Adc.adc7){
-				adcIndex=8;
-			}
-			else if(adcChannelCounter==Adc.adc8){
-				adcIndex=10;
-			}
-			else if(adcChannelCounter==Adc.adc9){
-				adcIndex=12;
-			}
-			else if(adcChannelCounter==Adc.adc10){
-				adcIndex=14;
-			}
-			else if(adcChannelCounter==Adc.adc11){
-				adcIndex=16;
-			}
-			else if(adcChannelCounter==Adc.adc12){
-				adcIndex=18;
-			}
-			else{
-				adcIndex=20;
-			}
 			for(avgCounter=0;avgCounter<ADC_AVG_COUNT;avgCounter++){
-				avgADCCounterValues[adcChannelCounter]+=adc1_buf[adcIndex + (adc1DataRepeat*avgCounter)];
+				int shiftedIndex = adcIndex + (adc1DataRepeat*avgCounter);
+				avgADCCounterValues[adcChannelCounter]+=adc1_buf[shiftedIndex];
 				if (avgCounter == (ADC_AVG_COUNT-1)){
 					avgADCCounterValues[adcChannelCounter] = avgADCCounterValues[adcChannelCounter]/ADC_AVG_COUNT;
 				}
 			}
 		}
-
 	}
 	adcValues[Adc.adc0] = (avgADCCounterValues[Adc.adc0] * Adc.adcDivisor) * Adc.adcResistorDivider;
 	adcValues[Adc.adc1] = (avgADCCounterValues[Adc.adc1] * Adc.adcDivisor) * Adc.adcResistorDivider;
@@ -1953,6 +2001,7 @@ void GetDaScreenBlink(void *argument)
 	 float *adcValues;
   for(;;)
   {
+	  	  setOutputGPIOState(outputGPIOs.mcu3V3_0,x);
 	  	  if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
 	  		  adcValues = getADCValues();
 	  		  float *adcValues1 = adcValues+1;

@@ -21,9 +21,8 @@
 #include "main.h"
 #include "cmsis_os.h"
 
-/* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "ls027b7dh01.c"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -106,6 +105,8 @@ uint8_t adcRestart[3];
 uint8_t gpioInputBuf[12];
 //14 gpio outputs to the Dev UI
 uint8_t gpioOutputState[14];
+
+static uint32_t i, j, k;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -351,6 +352,325 @@ int main(void)
     setErrorLED(9,ON);
     HAL_Delay(1000);
     setErrorLED(9,OFF);
+
+	SMLCD_InitGPIO();
+	SMLCD_Init();
+	SMLCD_Enable();
+	SMLCD_Clear();
+#define ORI 0
+	uint8_t ori;
+#if (ORI == 0)
+	ori = LCD_ORIENT_NORMAL;
+#elif (ORI == 1)
+	ori = LCD_ORIENT_180;
+#elif (ORI == 2)
+	ori = LCD_ORIENT_CW;
+#else
+	ori = LCD_ORIENT_CCW;
+#endif
+	SMLCD_Orientation(ori);
+
+
+	// Clear video buffer
+	LCD_Clear();
+
+
+	LCD_PixelMode = LCD_PSET;
+//	LCD_PixelMode = LCD_PRES;
+//	LCD_PixelMode = LCD_PINV;
+
+
+	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+	DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
+
+
+#if 0 // test screen orientation
+
+	uint32_t ticks = 0;
+
+	while (1) {
+		LCD_Clear();
+
+		DWT->CYCCNT = 0;
+
+#if 1
+		// Draw a fake interface
+
+		LCD_PixelMode = LCD_PSET;
+
+		LCD_Rect(0, 0, scr_width - 1, scr_height - 1);
+		LCD_Rect(2, 2, scr_width - 3, scr_height - 3);
+
+		// RTC :)
+		i  = 10;
+		j  = 10;
+		i += LCD_PutStr(i, j, "Time:", fnt7x10);
+		i  = 10;
+		j += 14;
+		i += LCD_PutIntLZ(i, j, 23, 2, fnt_dig_big) + 1; // Hours
+		LCD_FillRect(i, j + 6, i + 2, j + 14);
+		LCD_FillRect(i, j + 19, i + 2, j + 27);
+		i += 5;
+		i += LCD_PutIntLZ(i, j, 48, 2, fnt_dig_big) + 1; // Minutes
+		LCD_FillRect(i, j + 6, i + 2, j + 14);
+		LCD_FillRect(i, j + 19, i + 2, j + 27);
+		i += 5;
+		i += LCD_PutIntLZ(i, j, 59, 2, fnt_dig_big); // Seconds
+
+		// Horizontal divider
+		j += 38;
+		LCD_FillRect(2, j, scr_width - 3, j + 3);
+
+		// Vertical divider
+		LCD_FillRect(i + 5, 2, i + 8, j);
+
+		// Rectangle filled with black as a cell header
+		k  = 4;
+		i += 10;
+		LCD_FillRect(i, k, scr_width - 5, k + 16);
+
+		// The battery...
+		k += 3;
+		i += 10;
+		// Change drawing mode to INVERT pixels
+		LCD_PixelMode = LCD_PINV;
+		// So the text will be drawn on the black rectangle with INVERT mode
+		// As a result we will see a white text
+		LCD_PutStr(i, k, "BATTERY", fnt7x10);
+
+		// Change drawing mode to SET pixels (normal mode)
+		LCD_PixelMode = LCD_PSET;
+		k += 17;
+		i += 4;
+		LCD_PutIntF(i, k, 4153, 3, dig8x16); // 4153 means 4.153V
+		LCD_PutChar(i + 40, k + 3, 'V', fnt7x10);
+		k += 19;
+		i += 8;
+		LCD_PutIntU(i, k, 95, dig8x16); // 95% :)
+		LCD_PutChar(i + 20, k + 3, '%', fnt7x10);
+
+		// Pretend we have an environment BME280 sensor...
+		i  = 10;
+		j += 8;
+		i += LCD_PutStr(i, j, "BME280:", fnt7x10);
+
+		i  = 10;
+		j += 15;
+		i += LCD_PutStr(i, j, "Temperature:", fnt7x10);
+		i += LCD_PutIntF(i, j, 2468, 2, fnt7x10) + 2; // Let's say 2468 means 24.68C
+		i += LCD_PutChar(i, j, 'C', fnt7x10);
+		LCD_HLine(7, scr_width - 8, j + 12);
+
+		i  = 10;
+		j += 15;
+		i += LCD_PutStr(i, j, "Pressure   :", fnt7x10);
+		i += LCD_PutIntF(i, j, 738542, 3, fnt7x10) + 2; // 738542 means 738.542mmHg
+		i += LCD_PutStr(i, j, "mmHg", fnt7x10);
+		LCD_HLine(7, scr_width - 8, j + 12);
+
+		i  = 10;
+		j += 15;
+		i += LCD_PutStr(i, j, "Humidity   :", fnt7x10);
+		i += LCD_PutIntF(i, j, 32469, 3, fnt7x10) + 2; // 32469 means 32.469%RH
+		i += LCD_PutStr(i, j, "%RH", fnt7x10);
+
+		// Horizontal divider
+		j += 15;
+		LCD_FillRect(2, j, scr_width - 3, j + 3);
+
+		// And ambient light sensor...
+		i  = 10;
+		j += 8;
+		i += LCD_PutStr(i, j, "MAX44009:", fnt7x10);
+
+		i  = 10;
+		j += 15;
+		i += LCD_PutStr(i, j, "Illuminance:", fnt7x10);
+		i += LCD_PutIntF(i, j, 471382, 3, fnt7x10) + 2; // 471382 means 471.382LUX
+		i += LCD_PutStr(i, j, "LUX", fnt7x10);
+
+		// Draw a filled black rectangle at the bottom of screen
+		j += 15;
+		LCD_FillRect(2, j, scr_width - 3, scr_height - 3);
+
+		// Change drawing mode to RESET pixels -> drawing with "white" color
+		LCD_PixelMode = LCD_PRES;
+		i  = 23;
+		j += 7;
+		// This will be white on black
+		i += LCD_PutStr(i, j + 3, "Counter:", fnt7x10) + 2;
+		i += LCD_PutIntLZ(i, j, 5783, 10, dig8x16);
+
+		j += 20;
+		LCD_PutIntLZ(40, j, k, 10, &digits_medium);
+
+#endif
+
+#if 0
+		// Draw bitmaps
+		if (ori & (LCD_ORIENT_CW | LCD_ORIENT_CCW)) {
+			LCD_PixelMode = LCD_PINV;
+			LCD_DrawBitmap(16, scr_height - 110, 77, 93, bmp_lol_guy);
+			LCD_DrawBitmap(scr_width - 145, scr_height - 138, 128, 128, bmp_pandajs_logo);
+		}
+#endif
+
+#if 0
+
+		// Draw horizontal lines
+		j = 0;
+		for (i = 0; i < scr_height / 2; i += 3) {
+			LCD_HLine(j, j + 36, i);
+			j += 1;
+		}
+		j = 10;
+		for (i = 0; i < scr_height / 2; i += 2) {
+			LCD_HLine(0, j, i + (scr_height / 2));
+			j += 3;
+		}
+
+#endif
+
+#if 0
+
+		// Draw filled rectangles
+		j = 10;
+		for (i = 2; i < scr_height - 15; i += 14) {
+//			LCD_FillRect(j, i + 3, j + 4, i + 8);
+//			LCD_Rect(j - 2, i + 1, j + 6, i + 10);
+			LCD_FillRect(j, i + 3, j + 100, i + 8);
+			LCD_Rect(j - 2, i + 1, j + 102, i + 10);
+			j += 3;
+		}
+
+#endif
+
+#if 0
+
+		// Draw circles
+		if (scr_width > scr_height) {
+			j = scr_height / 2;
+		} else {
+			j = scr_width / 2;
+		}
+		for (i = 4; i < j; i += 4) {
+			LCD_Circle((scr_width / 2) - 1, (scr_height / 2) - 1, i);
+		}
+
+#endif
+
+
+//		LCD_Invert(2, 2, (scr_width / 2) - 1, (scr_height / 2) - 1);
+//		LCD_Invert(0, 0, scr_width, scr_height);
+//		LCD_InvertFull();
+
+		ticks = DWT->CYCCNT;
+
+//		DWT->CYCCNT = 0;
+		SMLCD_Flush();
+//		ticks = DWT->CYCCNT;
+
+
+		printf("orientation=%u %04b -> ", ori, ori);
+		if (ori == LCD_ORIENT_NORMAL) {
+			printf("NORM");
+			ori = LCD_ORIENT_CW;
+		} else if (ori == LCD_ORIENT_CW) {
+			printf("CW  ");
+			ori = LCD_ORIENT_180;
+		} else if (ori == LCD_ORIENT_180) {
+			printf("180 ");
+			ori = LCD_ORIENT_CCW;
+		} else {
+			ori = LCD_ORIENT_NORMAL;
+			printf("CCW ");
+		}
+		printf("\t%u\r\n", ticks);
+		if (ori == LCD_ORIENT_NORMAL) {
+			printf("----------------------------\r\n");
+		}
+
+//		ori = LCD_ORIENT_NORMAL;
+
+		SMLCD_Orientation(ori);
+
+		GPIO_PIN_INVERT(GPIOA, GPIO_PIN_5);
+		Delay_ms(1000);
+	}
+
+#endif // test screen orientation
+
+
+	SMLCD_Flush();
+
+
+	SMLCD_Orientation(LCD_ORIENT_CW);
+
+	j = scr_height - 65;
+
+	int32_t px, py;
+	int32_t dx, dy;
+
+	uint32_t x1, x2;
+	uint32_t y1, y2;
+
+	px = 0;
+	py = 0;
+	dx = 4;
+	dy = 2;
+
+	x1 = 10;
+	y1 = scr_height - 150;
+	x2 = scr_width - 78;
+	y2 = scr_height - 11;
+
+	uint32_t w = x2 - x1 + 1;
+	uint32_t h = y2 - y1 + 1;
+
+	// The main loop
+	while (1) {
+		// Invert the PA5 pin state every half of second
+		HAL_Delay(500);
+		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
+
+		LCD_Clear();
+		for (i = 10; i < scr_height - 200; i += 76) {
+			LCD_PutIntU(12, i, k, fnt_dig_big);
+			LCD_PutIntU(12, i + 36, ~k, fnt_dig_big);
+		}
+		k += 4321;
+
+
+		LCD_Rect(x1, y1, x2, y2);
+		LCD_Line(x1, y1, x1 + px, y1 + py);
+		LCD_Line(x1, y2, x1 + px, y1 + py);
+		LCD_Line(x2, y1, x1 + px, y1 + py);
+		LCD_Line(x2, y2, x1 + px, y1 + py);
+		px += dx;
+		py += dy;
+		if (px >= w) {
+			dx *= -1;
+		}
+		if (py <= 0) {
+			dy *= -1;
+		}
+		if (py >= h) {
+			dy *= -1;
+		}
+		if (py <= 0) {
+			dy *= -1;
+		}
+
+
+		LCD_DrawBitmap(scr_width - 68, --j, 64, 64, bmp_spider);
+		if (j == 0) {
+			j = scr_height - 65;
+		}
+
+
+		SMLCD_Flush();
+	}
+
     //int check = writeI2CRegister(LED.address,LED.led0_reg,blah2,1,1);
   //  if(check){
   //	  blah = readI2CRegister(LED.address,LED.led0_reg,1,1);
@@ -2001,7 +2321,21 @@ void GetDaScreenBlink(void *argument)
 	 float *adcValues;
   for(;;)
   {
-	  	  setOutputGPIOState(outputGPIOs.mcu3V3_0,x);
+	  	 /* setOutputGPIOState(outputGPIOs.mcu3V3_0,x);
+	  	  setOutputGPIOState(outputGPIOs.mcu3V3_1,!x);
+	  	  setOutputGPIOState(outputGPIOs.mcu3V3_2,x);
+	  	  setOutputGPIOState(outputGPIOs.mcu3V3_3,!x);
+	  	  setOutputGPIOState(outputGPIOs.configOut_0,x);
+	  	  setOutputGPIOState(outputGPIOs.configOut_1,!x);
+	  	  setOutputGPIOState(outputGPIOs.configOut_2,x);
+	  	  setOutputGPIOState(outputGPIOs.configOut_3,!x);
+	  	  setOutputGPIOState(outputGPIOs.out1V8_0,x);
+	  	  setOutputGPIOState(outputGPIOs.out1V8_1,!x);
+	  	  setOutputGPIOState(outputGPIOs.out1V8_2,x);
+	  	  setOutputGPIOState(outputGPIOs.out1V8_3,!x);
+	  	  setOutputGPIOState(outputGPIOs.odOut_0,x);
+	  	  setOutputGPIOState(outputGPIOs.odOut_1,!x); */
+
 	  	  if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
 	  		  adcValues = getADCValues();
 	  		  float *adcValues1 = adcValues+1;

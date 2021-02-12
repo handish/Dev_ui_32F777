@@ -32,7 +32,16 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+// External peripherals
+//#include "ls027b7dh01.h"
 
+// Graphical resources
+#include "font5x7.h"
+#include "font7x10.h"
+#include "digits5x9.h"
+#include "digits8x16.h"
+#include "bitmaps.h"
+#include "font_digits.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

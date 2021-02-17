@@ -33,7 +33,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 // External peripherals
-//#include "ls027b7dh01.h"
+#include "ls027b7dh01.h"
 
 // Graphical resources
 #include "font5x7.h"

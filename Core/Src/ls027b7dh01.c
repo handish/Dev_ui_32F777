@@ -303,16 +303,25 @@ void SMLCD_Orientation(uint8_t orientation) {
 // Clear the vRAM memory
 // note: size of video buffer must be a multiple of 4
 void LCD_Clear(void) {
+	int x=0;
 #if 0
 	// This variant can be faster, speed depends on libraries used
 	// But also needs include of "string.h"
-	memset(vRAM, 0xFFFFFFFF, sizeof(vRAM) >> 2);
+	memset(vRAM, 0x0, (sizeof(vRAM) >> 2));
+	//memset(vRAM, 0xFFFFFFFF, sizeof(vRAM) >> 2);
 #else
 	register uint32_t *ptr = (uint32_t *)vRAM;
 	register uint32_t i = sizeof(vRAM) >> 2;
 
 	while (i--) {
-		*ptr++ = 0xFFFFFFFF;
+		if(x){
+			*ptr++ = 0xFFFFFFFF;
+			x=0;
+		}
+		else{
+			*ptr++ = 0x0;
+			x=1;
+		}
 	}
 #endif
 }

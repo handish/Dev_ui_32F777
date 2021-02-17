@@ -2,16 +2,6 @@
 #define __FONT5x7_H
 
 #define fnt5x7 &Font5x7
-typedef struct Font_TypeDef {
-	uint8_t font_Width;       // Width of character
-	uint8_t font_Height;      // Height of character
-	uint8_t font_BPC;         // Bytes for one character
-	uint8_t font_Scan;        // Font scan lines behavior
-	uint8_t font_MinChar;     // Code of the first known symbol
-	uint8_t font_MaxChar;     // Code of the last known symbol
-	uint8_t font_UnknownChar; // Code of the unknown symbol
-	uint8_t font_Data[];
-} Font_TypeDef;
 
 static const Font_TypeDef Font5x7 = {
 		5,           // Font width

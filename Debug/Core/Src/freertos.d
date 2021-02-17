@@ -46,7 +46,15 @@ Core/Src/freertos.o: ../Core/Src/freertos.c \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usb.h \
- ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd_ex.h
+ ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd_ex.h \
+ ../Core/Inc/ls027b7dh01.h \
+ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/font5x7.h \
+ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/font7x10.h \
+ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/digits5x9.h \
+ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/digits8x16.h \
+ ../Core/Inc/ls027b7dh01.h \
+ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/bitmaps.h \
+ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/font_digits.h
 
 ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
 
@@ -145,3 +153,19 @@ Core/Src/freertos.o: ../Core/Src/freertos.c \
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_ll_usb.h:
 
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_pcd_ex.h:
+
+../Core/Inc/ls027b7dh01.h:
+
+C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/font5x7.h:
+
+C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/font7x10.h:
+
+C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/digits5x9.h:
+
+C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/digits8x16.h:
+
+../Core/Inc/ls027b7dh01.h:
+
+C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/bitmaps.h:
+
+C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/font_digits.h:

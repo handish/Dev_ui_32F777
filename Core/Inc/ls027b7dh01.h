@@ -6,7 +6,6 @@
 //#include "spi.h"
 #include "stm32f7xx_hal.h"
 
-#include "main.h"
 
 // Note: works with SPI frequency up to 16MHz
 
@@ -17,14 +16,14 @@
 //   0 - do not use
 //   1 - use bit banding (CPU must support this, by the way)
 // In some circumstances can speed up pixels drawing
-#define SMLCD_USE_BITBAND          1
+#define SMLCD_USE_BITBAND          0
 
 // Choose calculation method for pixel offset in function of drawing a pixel
 //   0 - use switch method, in tests it showed better results when compilation was made without optimizations (O0)
 //   1 - use if..else method, it showed better results with compiler optimizations (O2/O3/Os)
 // note: in fact better method depends on the compiler used, its optimization settings, bit-banding usage and so on...
 //       is better to perform a tests in each case and choose which method suits better
-#define SMLCD_PIXEL_METHOD         0
+#define SMLCD_PIXEL_METHOD         1
 
 // Choose whether vRAM boundary will be checked for drawing each pixel
 //   0 - do not use boundary checking (faster)
@@ -58,13 +57,13 @@
 
 // DISP pin (display on/off) - PB2
 #define SMLCD_DISP_PORT            GPIOJ
-#define SMLCD_DISP_PIN             LCD_DISP_Pin
+#define SMLCD_DISP_PIN             GPIO_PIN_1
 #define SMLCD_DISP_L               HAL_GPIO_WritePin(SMLCD_DISP_PORT,SMLCD_DISP_PIN,GPIO_PIN_RESET)
 #define SMLCD_DISP_H               HAL_GPIO_WritePin(SMLCD_DISP_PORT,SMLCD_DISP_PIN,GPIO_PIN_SET)
 
 // SCS pin (chip select) - PB14
-#define SMLCD_SCS_PORT             LCD_SS_GPIO_Port
-#define SMLCD_SCS_PIN              LCD_SS_Pin
+#define SMLCD_SCS_PORT             GPIOE
+#define SMLCD_SCS_PIN              GPIO_PIN_4
 #define SMLCD_SCS_L                HAL_GPIO_WritePin(SMLCD_SCS_PORT,SMLCD_SCS_PIN,GPIO_PIN_RESET)
 #define SMLCD_SCS_H                HAL_GPIO_WritePin(SMLCD_SCS_PORT, SMLCD_SCS_PIN,GPIO_PIN_SET)
 
@@ -75,9 +74,9 @@
 
 
 // Display commands
-#define SMLCD_CMD_WRITE            ((uint8_t)0x88) // Write line LP has 1xxx1xxx
+#define SMLCD_CMD_WRITE            ((uint8_t)0x88) // Write line LP has 1xxx1xxx for update, 1 data bit per pixel mode
 #define SMLCD_CMD_VCOM             ((uint8_t)0x40) // VCOM bit (not a command in fact)
-#define SMLCD_CMD_CLS              ((uint8_t)0x20) // Clear the screen to all black
+#define SMLCD_CMD_CLS              ((uint8_t)0x20) // Clear the screen to all white 00111000
 #define SMLCD_CMD_NOP              ((uint8_t)0x00) // No command
 
 

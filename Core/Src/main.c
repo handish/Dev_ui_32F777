@@ -21,8 +21,8 @@
 #include "main.h"
 #include "cmsis_os.h"
 
+/* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ls027b7dh01.c"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -248,7 +248,7 @@ int main(void)
  static uint16_t update_Line2 = 0b1001000010010011;
  static uint16_t update_Line3 = 0b1001000010010010;
  static uint16_t update_dummy = 0b0000000000000000;
- static uint16_t LCD_Clear = 0b0010000000000000;
+ static uint16_t LCD_Cleared = 0b0010000000000000;
  static _Bool ON = 1;
  static _Bool OFF = 0;
  char uartBuf[50];
@@ -302,41 +302,41 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
-  HAL_GPIO_WritePin(GPIOJ,LCD_DISP_Pin,GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOJ,LCD_EXTMODE_Pin,GPIO_PIN_RESET);
-  HAL_Delay(1);
-  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-  HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Clear, 1, 100);
-  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-  HAL_Delay(1);
-  int x=1;
-  uint16_t test[102];
-  test[0] = update_Line1;
-  uartTransmitInt(test[0],7);
-  while (x<101){
-	test[x] = LCD_Green;
-	x=x+1;
-  }
-  x=0;
-  test[61] = update_dummy;
-  uartTransmitInt(test,7);
-  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-  HAL_SPI_Transmit(&hspi4, (uint16_t *)test, 102, 100);
-  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-  HAL_Delay(5);
-  test[0]=update_Line2;
-  uartTransmitInt(test[0],7);
-  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-  HAL_SPI_Transmit(&hspi4, (uint16_t *)test, 102, 100);
-  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-  HAL_Delay(5);
-  test[0]=update_Line3;
-  uartTransmitInt(test[0],7);
-  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-  HAL_SPI_Transmit(&hspi4, (uint16_t *)test, 102, 100);
-  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(GPIOH,FRONT_LED_CTRL_Pin,GPIO_PIN_SET);
-  HAL_Delay(5000);
+//  HAL_GPIO_WritePin(GPIOJ,LCD_DISP_Pin,GPIO_PIN_SET);
+//    HAL_GPIO_WritePin(GPIOJ,LCD_EXTMODE_Pin,GPIO_PIN_RESET);
+//    HAL_Delay(1);
+//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
+//    HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Clear, 1, 100);
+//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
+//    HAL_Delay(1);
+   int x=1;
+//    uint16_t test[102];
+//    test[0] = update_Line1;
+//    uartTransmitInt(test[0],7);
+//    while (x<101){
+//  	test[x] = LCD_Green;
+//  	x=x+1;
+//    }
+//    x=0;
+//    test[61] = update_dummy;
+//    uartTransmitInt(test,7);
+//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
+//    HAL_SPI_Transmit(&hspi4, (uint16_t *)test, 102, 100);
+//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
+//    HAL_Delay(5);
+//    test[0]=update_Line2;
+//    uartTransmitInt(test[0],7);
+//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
+//    HAL_SPI_Transmit(&hspi4, (uint16_t *)test, 102, 100);
+//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
+//    HAL_Delay(5);
+//    test[0]=update_Line3;
+//    uartTransmitInt(test[0],7);
+//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
+//    HAL_SPI_Transmit(&hspi4, (uint16_t *)test, 102, 100);
+//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
+//    HAL_GPIO_WritePin(GPIOH,FRONT_LED_CTRL_Pin,GPIO_PIN_SET);
+//    HAL_Delay(5000);
 
 
   configureLEDDriver();
@@ -379,297 +379,18 @@ int main(void)
 //	LCD_PixelMode = LCD_PRES;
 //	LCD_PixelMode = LCD_PINV;
 
-
-	CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-	DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-
-
-#if 0 // test screen orientation
-
-	uint32_t ticks = 0;
-
-	while (1) {
-		LCD_Clear();
-
-		DWT->CYCCNT = 0;
-
-#if 1
-		// Draw a fake interface
-
-		LCD_PixelMode = LCD_PSET;
-
-		LCD_Rect(0, 0, scr_width - 1, scr_height - 1);
-		LCD_Rect(2, 2, scr_width - 3, scr_height - 3);
-
-		// RTC :)
-		i  = 10;
-		j  = 10;
-		i += LCD_PutStr(i, j, "Time:", fnt7x10);
-		i  = 10;
-		j += 14;
-		i += LCD_PutIntLZ(i, j, 23, 2, fnt_dig_big) + 1; // Hours
-		LCD_FillRect(i, j + 6, i + 2, j + 14);
-		LCD_FillRect(i, j + 19, i + 2, j + 27);
-		i += 5;
-		i += LCD_PutIntLZ(i, j, 48, 2, fnt_dig_big) + 1; // Minutes
-		LCD_FillRect(i, j + 6, i + 2, j + 14);
-		LCD_FillRect(i, j + 19, i + 2, j + 27);
-		i += 5;
-		i += LCD_PutIntLZ(i, j, 59, 2, fnt_dig_big); // Seconds
-
-		// Horizontal divider
-		j += 38;
-		LCD_FillRect(2, j, scr_width - 3, j + 3);
-
-		// Vertical divider
-		LCD_FillRect(i + 5, 2, i + 8, j);
-
-		// Rectangle filled with black as a cell header
-		k  = 4;
-		i += 10;
-		LCD_FillRect(i, k, scr_width - 5, k + 16);
-
-		// The battery...
-		k += 3;
-		i += 10;
-		// Change drawing mode to INVERT pixels
-		LCD_PixelMode = LCD_PINV;
-		// So the text will be drawn on the black rectangle with INVERT mode
-		// As a result we will see a white text
-		LCD_PutStr(i, k, "BATTERY", fnt7x10);
-
-		// Change drawing mode to SET pixels (normal mode)
-		LCD_PixelMode = LCD_PSET;
-		k += 17;
-		i += 4;
-		LCD_PutIntF(i, k, 4153, 3, dig8x16); // 4153 means 4.153V
-		LCD_PutChar(i + 40, k + 3, 'V', fnt7x10);
-		k += 19;
-		i += 8;
-		LCD_PutIntU(i, k, 95, dig8x16); // 95% :)
-		LCD_PutChar(i + 20, k + 3, '%', fnt7x10);
-
-		// Pretend we have an environment BME280 sensor...
-		i  = 10;
-		j += 8;
-		i += LCD_PutStr(i, j, "BME280:", fnt7x10);
-
-		i  = 10;
-		j += 15;
-		i += LCD_PutStr(i, j, "Temperature:", fnt7x10);
-		i += LCD_PutIntF(i, j, 2468, 2, fnt7x10) + 2; // Let's say 2468 means 24.68C
-		i += LCD_PutChar(i, j, 'C', fnt7x10);
-		LCD_HLine(7, scr_width - 8, j + 12);
-
-		i  = 10;
-		j += 15;
-		i += LCD_PutStr(i, j, "Pressure   :", fnt7x10);
-		i += LCD_PutIntF(i, j, 738542, 3, fnt7x10) + 2; // 738542 means 738.542mmHg
-		i += LCD_PutStr(i, j, "mmHg", fnt7x10);
-		LCD_HLine(7, scr_width - 8, j + 12);
-
-		i  = 10;
-		j += 15;
-		i += LCD_PutStr(i, j, "Humidity   :", fnt7x10);
-		i += LCD_PutIntF(i, j, 32469, 3, fnt7x10) + 2; // 32469 means 32.469%RH
-		i += LCD_PutStr(i, j, "%RH", fnt7x10);
-
-		// Horizontal divider
-		j += 15;
-		LCD_FillRect(2, j, scr_width - 3, j + 3);
-
-		// And ambient light sensor...
-		i  = 10;
-		j += 8;
-		i += LCD_PutStr(i, j, "MAX44009:", fnt7x10);
-
-		i  = 10;
-		j += 15;
-		i += LCD_PutStr(i, j, "Illuminance:", fnt7x10);
-		i += LCD_PutIntF(i, j, 471382, 3, fnt7x10) + 2; // 471382 means 471.382LUX
-		i += LCD_PutStr(i, j, "LUX", fnt7x10);
-
-		// Draw a filled black rectangle at the bottom of screen
-		j += 15;
-		LCD_FillRect(2, j, scr_width - 3, scr_height - 3);
-
-		// Change drawing mode to RESET pixels -> drawing with "white" color
-		LCD_PixelMode = LCD_PRES;
-		i  = 23;
-		j += 7;
-		// This will be white on black
-		i += LCD_PutStr(i, j + 3, "Counter:", fnt7x10) + 2;
-		i += LCD_PutIntLZ(i, j, 5783, 10, dig8x16);
-
-		j += 20;
-		LCD_PutIntLZ(40, j, k, 10, &digits_medium);
-
-#endif
-
-#if 0
-		// Draw bitmaps
-		if (ori & (LCD_ORIENT_CW | LCD_ORIENT_CCW)) {
-			LCD_PixelMode = LCD_PINV;
-			LCD_DrawBitmap(16, scr_height - 110, 77, 93, bmp_lol_guy);
-			LCD_DrawBitmap(scr_width - 145, scr_height - 138, 128, 128, bmp_pandajs_logo);
-		}
-#endif
-
-#if 0
-
-		// Draw horizontal lines
-		j = 0;
-		for (i = 0; i < scr_height / 2; i += 3) {
-			LCD_HLine(j, j + 36, i);
-			j += 1;
-		}
-		j = 10;
-		for (i = 0; i < scr_height / 2; i += 2) {
-			LCD_HLine(0, j, i + (scr_height / 2));
-			j += 3;
-		}
-
-#endif
-
-#if 0
-
-		// Draw filled rectangles
-		j = 10;
-		for (i = 2; i < scr_height - 15; i += 14) {
-//			LCD_FillRect(j, i + 3, j + 4, i + 8);
-//			LCD_Rect(j - 2, i + 1, j + 6, i + 10);
-			LCD_FillRect(j, i + 3, j + 100, i + 8);
-			LCD_Rect(j - 2, i + 1, j + 102, i + 10);
-			j += 3;
-		}
-
-#endif
-
-#if 0
-
-		// Draw circles
-		if (scr_width > scr_height) {
-			j = scr_height / 2;
-		} else {
-			j = scr_width / 2;
-		}
-		for (i = 4; i < j; i += 4) {
-			LCD_Circle((scr_width / 2) - 1, (scr_height / 2) - 1, i);
-		}
-
-#endif
-
-
-//		LCD_Invert(2, 2, (scr_width / 2) - 1, (scr_height / 2) - 1);
-//		LCD_Invert(0, 0, scr_width, scr_height);
-//		LCD_InvertFull();
-
-		ticks = DWT->CYCCNT;
-
-//		DWT->CYCCNT = 0;
-		SMLCD_Flush();
-//		ticks = DWT->CYCCNT;
-
-
-		printf("orientation=%u %04b -> ", ori, ori);
-		if (ori == LCD_ORIENT_NORMAL) {
-			printf("NORM");
-			ori = LCD_ORIENT_CW;
-		} else if (ori == LCD_ORIENT_CW) {
-			printf("CW  ");
-			ori = LCD_ORIENT_180;
-		} else if (ori == LCD_ORIENT_180) {
-			printf("180 ");
-			ori = LCD_ORIENT_CCW;
-		} else {
-			ori = LCD_ORIENT_NORMAL;
-			printf("CCW ");
-		}
-		printf("\t%u\r\n", ticks);
-		if (ori == LCD_ORIENT_NORMAL) {
-			printf("----------------------------\r\n");
-		}
-
-//		ori = LCD_ORIENT_NORMAL;
-
-		SMLCD_Orientation(ori);
-
-		GPIO_PIN_INVERT(GPIOA, GPIO_PIN_5);
-		Delay_ms(1000);
-	}
-
-#endif // test screen orientation
-
-
+	//SMLCD_Clear();
 	SMLCD_Flush();
-
-
-	SMLCD_Orientation(LCD_ORIENT_CW);
-
-	j = scr_height - 65;
-
-	int32_t px, py;
-	int32_t dx, dy;
-
-	uint32_t x1, x2;
-	uint32_t y1, y2;
-
-	px = 0;
-	py = 0;
-	dx = 4;
-	dy = 2;
-
-	x1 = 10;
-	y1 = scr_height - 150;
-	x2 = scr_width - 78;
-	y2 = scr_height - 11;
-
-	uint32_t w = x2 - x1 + 1;
-	uint32_t h = y2 - y1 + 1;
-
-	// The main loop
-	while (1) {
-		// Invert the PA5 pin state every half of second
-		HAL_Delay(500);
-		HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-
-		LCD_Clear();
-		for (i = 10; i < scr_height - 200; i += 76) {
-			LCD_PutIntU(12, i, k, fnt_dig_big);
-			LCD_PutIntU(12, i + 36, ~k, fnt_dig_big);
-		}
-		k += 4321;
-
-
-		LCD_Rect(x1, y1, x2, y2);
-		LCD_Line(x1, y1, x1 + px, y1 + py);
-		LCD_Line(x1, y2, x1 + px, y1 + py);
-		LCD_Line(x2, y1, x1 + px, y1 + py);
-		LCD_Line(x2, y2, x1 + px, y1 + py);
-		px += dx;
-		py += dy;
-		if (px >= w) {
-			dx *= -1;
-		}
-		if (py <= 0) {
-			dy *= -1;
-		}
-		if (py >= h) {
-			dy *= -1;
-		}
-		if (py <= 0) {
-			dy *= -1;
-		}
-
-
-		LCD_DrawBitmap(scr_width - 68, --j, 64, 64, bmp_spider);
-		if (j == 0) {
-			j = scr_height - 65;
-		}
-
-
-		SMLCD_Flush();
+	if (scr_width > scr_height) {
+		j = scr_height / 2;
+	} else {
+		j = scr_width / 2;
 	}
+	for (i = 4; i < j; i += 4) {
+		LCD_Circle((scr_width / 2) - 1, (scr_height / 2) - 1, i);
+	}
+	SMLCD_Flush();
+	HAL_Delay(100);
 
     //int check = writeI2CRegister(LED.address,LED.led0_reg,blah2,1,1);
   //  if(check){
@@ -778,12 +499,9 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE
-                              |RCC_OSCILLATORTYPE_LSE;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 15;
@@ -798,12 +516,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     Error_Handler();
   }
@@ -1136,7 +854,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00303D5B;
+  hi2c1.Init.Timing = 0x007074AF;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -1182,7 +900,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x00303D5B;
+  hi2c2.Init.Timing = 0x007074AF;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -1228,7 +946,7 @@ static void MX_I2C3_Init(void)
 
   /* USER CODE END I2C3_Init 1 */
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x00303D5B;
+  hi2c3.Init.Timing = 0x007074AF;
   hi2c3.Init.OwnAddress1 = 0;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -1274,7 +992,7 @@ static void MX_I2C4_Init(void)
 
   /* USER CODE END I2C4_Init 1 */
   hi2c4.Instance = I2C4;
-  hi2c4.Init.Timing = 0x00303D5B;
+  hi2c4.Init.Timing = 0x007074AF;
   hi2c4.Init.OwnAddress1 = 0;
   hi2c4.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c4.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -1357,11 +1075,11 @@ static void MX_SPI4_Init(void)
   hspi4.Instance = SPI4;
   hspi4.Init.Mode = SPI_MODE_MASTER;
   hspi4.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi4.Init.DataSize = SPI_DATASIZE_16BIT;
+  hspi4.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi4.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi4.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi4.Init.NSS = SPI_NSS_SOFT;
-  hspi4.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi4.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
   hspi4.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi4.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi4.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -2347,7 +2065,7 @@ void GetDaScreenBlink(void *argument)
 
 	 		  uartTransmitChar("hello\r\n",7);
 	 		  HAL_GPIO_TogglePin(LCD_SS_GPIO_Port,LCD_SS_Pin);
-	 		  HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_White, 1, 100);
+	 		  //HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_White, 1, 100);
 	 		  HAL_GPIO_TogglePin(LCD_SS_GPIO_Port,LCD_SS_Pin);
 	 	  }
 	 	  else{
@@ -2355,7 +2073,7 @@ void GetDaScreenBlink(void *argument)
 	 		  x=0;
 	 		  uartTransmitChar("here\r\n",7);
 	 		  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-	 		  HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_Black, 1, 100);
+	 		  //HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_Black, 1, 100);
 	 		  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
 	 	  }
 	 	  osDelay(400);

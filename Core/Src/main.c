@@ -107,6 +107,8 @@ uint8_t gpioInputBuf[12];
 uint8_t gpioOutputState[14];
 
 static uint32_t i, j, k;
+
+uint8_t inputButtonSet = 5; //set to a higher value than any other button priority. 5 is the "unused" state
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -1507,9 +1509,9 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOI, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : DWN_BTN_Pin SEL_BTN_Pin UP_BTN_Pin */
-  GPIO_InitStruct.Pin = DWN_BTN_Pin|SEL_BTN_Pin|UP_BTN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pins : DWN_BTN_Pin SEL_BTN_Pin UP_BTN_Pin BACK_BTN_Pin */
+  GPIO_InitStruct.Pin = DWN_BTN_Pin|SEL_BTN_Pin|UP_BTN_Pin|BACK_BTN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOK, &GPIO_InitStruct);
 
@@ -1518,12 +1520,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(UI_INPUT1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : BACK_BTN_Pin */
-  GPIO_InitStruct.Pin = BACK_BTN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(BACK_BTN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : UI_INPUT2_Pin UI_INPUT10_Pin UI_INPUT5_Pin UI_INPUT9_Pin
                            UI_INPUT4_Pin UI_INPUT3_Pin UI_INPUT7_Pin UI_INPUT8_Pin
@@ -1571,6 +1567,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOJ, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
 
 }
 
@@ -2053,7 +2056,9 @@ void GetDaScreenBlink(void *argument)
 	  	  setOutputGPIOState(outputGPIOs.out1V8_3,!x);
 	  	  setOutputGPIOState(outputGPIOs.odOut_0,x);
 	  	  setOutputGPIOState(outputGPIOs.odOut_1,!x); */
-
+	  	  if(inputButtonSet<5){
+	  		  inputButtonSet=5;
+	  	  }
 	  	  if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
 	  		  adcValues = getADCValues();
 	  		  float *adcValues1 = adcValues+1;

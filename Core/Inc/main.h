@@ -101,10 +101,13 @@ void Error_Handler(void);
 #define OUT1_CONFIG_GPIO_Port GPIOI
 #define DWN_BTN_Pin GPIO_PIN_7
 #define DWN_BTN_GPIO_Port GPIOK
+#define DWN_BTN_EXTI_IRQn EXTI9_5_IRQn
 #define SEL_BTN_Pin GPIO_PIN_6
 #define SEL_BTN_GPIO_Port GPIOK
+#define SEL_BTN_EXTI_IRQn EXTI9_5_IRQn
 #define UP_BTN_Pin GPIO_PIN_5
 #define UP_BTN_GPIO_Port GPIOK
+#define UP_BTN_EXTI_IRQn EXTI9_5_IRQn
 #define UI_INPUT1_Pin GPIO_PIN_13
 #define UI_INPUT1_GPIO_Port GPIOC
 #define SPARE_I2C_SDA_3V3_Pin GPIO_PIN_0
@@ -113,6 +116,7 @@ void Error_Handler(void);
 #define OUT2_CONFIG_GPIO_Port GPIOI
 #define BACK_BTN_Pin GPIO_PIN_4
 #define BACK_BTN_GPIO_Port GPIOK
+#define BACK_BTN_EXTI_IRQn EXTI4_IRQn
 #define UI_INPUT2_Pin GPIO_PIN_4
 #define UI_INPUT2_GPIO_Port GPIOD
 #define SOC_UART_RX_3V3_Pin GPIO_PIN_2

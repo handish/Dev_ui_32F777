@@ -27,7 +27,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -39,7 +38,13 @@
 /* USER CODE BEGIN PM */
 
 /* USER CODE END PM */
-
+static struct buttonPriority{
+	int up;
+	int down;
+	int back;
+	int sel;
+};
+struct buttonPriority buttonPriority = {1,2,3,4};
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 
@@ -68,6 +73,7 @@ extern TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN EV */
 extern uint8_t adcRestart[3];
+extern uint8_t inputButtonSet;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -169,6 +175,23 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line4 interrupt.
+  * This interrupt handles the back button. The other interrupts are or'd on the 9-5
+  */
+void EXTI4_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI4_IRQn 0 */
+
+  /* USER CODE END EXTI4_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
+  /* USER CODE BEGIN EXTI4_IRQn 1 */
+  if(inputButtonSet>buttonPriority.back){
+	  inputButtonSet = buttonPriority.back;
+  }
+  /* USER CODE END EXTI4_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 stream0 global interrupt.
   */
 void DMA1_Stream0_IRQHandler(void)
@@ -196,6 +219,40 @@ void ADC_IRQHandler(void)
   /* USER CODE BEGIN ADC_IRQn 1 */
 
   /* USER CODE END ADC_IRQn 1 */
+}
+
+/**
+  * @brief This function handles EXTI line[9:5] interrupts.
+  */
+void EXTI9_5_IRQHandler(void)
+{
+
+  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
+	uint8_t buttonStates[3];
+	buttonStates[0] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_5);
+	buttonStates[1] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_6);
+	buttonStates[2] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_7);
+	if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_5)){ //up button
+		if(inputButtonSet > buttonPriority.up){
+			inputButtonSet = buttonPriority.up;
+		}
+	}
+	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_6)){ //sel button
+		if(inputButtonSet > buttonPriority.sel){
+			inputButtonSet = buttonPriority.sel;
+		}
+	}
+	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_7)){ //down button
+		if(inputButtonSet > buttonPriority.down){
+			inputButtonSet = buttonPriority.down;
+		}
+	}
+  /* USER CODE END EXTI9_5_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_5);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
+  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+  /* USER CODE END EXTI9_5_IRQn 1 */
 }
 
 /**

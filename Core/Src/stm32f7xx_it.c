@@ -38,13 +38,7 @@
 /* USER CODE BEGIN PM */
 
 /* USER CODE END PM */
-static struct buttonPriority{
-	int up;
-	int down;
-	int back;
-	int sel;
-};
-struct buttonPriority buttonPriority = {1,2,3,4};
+
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 
@@ -74,6 +68,13 @@ extern TIM_HandleTypeDef htim6;
 /* USER CODE BEGIN EV */
 extern uint8_t adcRestart[3];
 extern uint8_t inputButtonSet;
+static struct buttonPriority{
+	int up;
+	int down;
+	int back;
+	int sel;
+};
+struct buttonPriority buttonPriority = {1,2,3,4};
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -176,7 +177,6 @@ void DebugMon_Handler(void)
 
 /**
   * @brief This function handles EXTI line4 interrupt.
-  * This interrupt handles the back button. The other interrupts are or'd on the 9-5
   */
 void EXTI4_IRQHandler(void)
 {
@@ -226,7 +226,6 @@ void ADC_IRQHandler(void)
   */
 void EXTI9_5_IRQHandler(void)
 {
-
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 	uint8_t buttonStates[3];
 	buttonStates[0] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_5);

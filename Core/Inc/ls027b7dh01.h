@@ -35,7 +35,7 @@
 // Choose whether video buffer will be sent using look-up table or not
 //   0 - use real-time bit reversing for line numbers (less code, a bit slower)
 //   1 - use look-up table for line numbers (bigger code, a bit faster)
-#define SMLCD_FLUSH_LUT            1
+#define SMLCD_FLUSH_LUT            0
 
 // Choose VCOM generation method
 //   0 - hardware VCOM generation, set when [EXTMODE = H]
@@ -44,13 +44,13 @@
 //       SMLCD_ToggleVCOM() function must be used to toggle VCOM state
 //       State of VCOM should alternate in equal periods of time
 //       It depends on type of screen used
-# define SMLCD_VCOM_SOFT           0
+# define SMLCD_VCOM_SOFT           1
 
 
 // HAL
 
 // SPI port
-//#define SMLCD_SPI_PORT             hSPI4
+//#define SMLCD_SPI_PORT             hspi4
 
 // GPIO peripherals
 //#define SMLCD_GPIO_PERIPH          (RCC_AHB2ENR_GPIOBEN)
@@ -66,6 +66,19 @@
 #define SMLCD_SCS_PIN              GPIO_PIN_4
 #define SMLCD_SCS_L                HAL_GPIO_WritePin(SMLCD_SCS_PORT,SMLCD_SCS_PIN,GPIO_PIN_RESET)
 #define SMLCD_SCS_H                HAL_GPIO_WritePin(SMLCD_SCS_PORT, SMLCD_SCS_PIN,GPIO_PIN_SET)
+
+//EXMODE Pin
+#define LCD_EXTMODE_Pin GPIO_PIN_0
+#define LCD_EXTMODE_GPIO_Port GPIOJ
+#define LCD_EXCOMM_L  HAL_GPIO_WritePin(LCD_EXTMODE_GPIO_Port,LCD_EXTMODE_Pin,GPIO_PIN_RESET);
+#define LCD_EXCOMM_H  HAL_GPIO_WritePin(LCD_EXTMODE_GPIO_Port,LCD_EXTMODE_Pin,GPIO_PIN_SET);
+
+//Frontlight Pin
+#define FRONT_LED_CTRL_Pin GPIO_PIN_12
+#define FRONT_LED_CTRL_GPIO_Port GPIOH
+#define LCD_FRONTLIGHT_L HAL_GPIO_WritePin(FRONT_LED_CTRL_GPIO_Port,FRONT_LED_CTRL_Pin,GPIO_PIN_RESET);
+#define LCD_FRONTLIGHT_H HAL_GPIO_WritePin(FRONT_LED_CTRL_GPIO_Port,FRONT_LED_CTRL_Pin,GPIO_PIN_SET);
+
 
 
 // Screen resolution (in pixels)
@@ -119,8 +132,10 @@ typedef struct {
 extern uint16_t scr_width;
 extern uint16_t scr_height;
 extern uint8_t LCD_PixelMode;
+extern SPI_HandleTypeDef hspi4;
+extern uint8_t transmitBuffer[48482];
 
-
+#define SMLCD_SPI_PORT             hspi4
 // Public macros and functions
 
 // Enable the display (using DISP pin)
@@ -136,7 +151,7 @@ __STATIC_INLINE void SMLCD_Disable(void) {
 
 // Function prototypes
 void SMLCD_InitGPIO(void);
-void SMLCD_Init(void);
+void SMLCD_Init(SPI_HandleTypeDef hspi);
 void SMLCD_Clear(void);
 #if (SMLCD_VCOM_SOFT)
 void SMLCD_ToggleVCOM(void);
@@ -170,5 +185,8 @@ void LCD_DrawBitmap(uint16_t X, uint16_t Y, uint16_t W, uint16_t H, const uint8_
 
 void LCD_Invert(uint16_t X, uint16_t Y, uint16_t W, uint16_t H);
 void LCD_InvertFull(void);
+void LCD_BlackWhite(int color);
+void LCD_DrawSomeLinesBatchLine();
+void LCD_DrawSomeLinesSingleLine();
 
 #endif // __LS027B7DH01_H

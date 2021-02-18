@@ -8,6 +8,8 @@
 uint16_t scr_width;
 uint16_t scr_height;
 
+SPI_HandleTypeDef SMLCD_SPI_PORT;
+
 // Pixel drawing mode
 // Whereas in most drawing operations pixels are set, use global variable to select drawing mode
 // instead of passing set/reset/invert mode in each call of drawing functions
@@ -28,9 +30,8 @@ static uint8_t SMLCD_VCOM = 0x00;
 static const uint8_t LUT_PSET[8] = { 0x7F, 0xBF, 0xDF, 0xEF, 0xF7, 0xFB, 0xFD, 0xFE };
 static const uint8_t LUT_PRST[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
-extern SPI_HandleTypeDef hspi4;
 
-#define SMLCD_SPI_PORT             hspi4
+
 // Swap values of variables (XOR algorithm)
 // notes:
 //   variables must be same data type
@@ -72,13 +73,16 @@ void SMLCD_InitGPIO(void) {
 	//GPIO_set_mode(SMLCD_SCS_PORT, GPIO_Mode_OUT, GPIO_PUPD_PU, SMLCD_SCS_PIN);
 	//GPIO_out_cfg(SMLCD_SCS_PORT, GPIO_OT_PP, GPIO_SPD_LOW, SMLCD_SCS_PIN);
 	SMLCD_SCS_L;
+	LCD_EXCOMM_L;
+	LCD_FRONTLIGHT_H;
 }
 
 // Initialize display
 // note: SPI and GPIO must be initialized before calling this function
-void SMLCD_Init(void) {
+void SMLCD_Init(SPI_HandleTypeDef hspi) {
 	// Set default drawing mode
 	LCD_PixelMode = LCD_PSET;
+	SMLCD_SPI_PORT = hspi;
 
 	// Set initial image orientation
 	SMLCD_Orientation(LCD_ORIENT_NORMAL);
@@ -87,9 +91,13 @@ void SMLCD_Init(void) {
 // Clear display memory (clear screen)
 void SMLCD_Clear(void) {
 	// Send "Clear Screen" command
+	uint8_t sendBytes[2];
 	SMLCD_SCS_H;
-	HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_CLS, 1, 100);
-	HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+	sendBytes[0]=SMLCD_CMD_CLS;
+	sendBytes[1]=SMLCD_CMD_NOP;
+	HAL_SPI_Transmit(&SMLCD_SPI_PORT, sendBytes, sizeof(sendBytes), 100);
+	//HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_CLS, 1, 100);
+	//HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
 	//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_CLS);
 	//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_NOP);
 	SMLCD_SCS_L;
@@ -110,27 +118,46 @@ void SMLCD_ToggleVCOM(void) {
 
 // Send vRAM buffer into display
 void SMLCD_Flush(void) {
-#if 0
+	int commandByte=1;
+	int lineByte=1;
+	int lineAmount=SCR_H;
+	int nopBytesPerLine= 1;
+	int dataBytesPerLine=SCR_W/8;
+	int finalNOPByte=1;
+	uint8_t transmitBuffer[commandByte + lineAmount*(lineByte+nopBytesPerLine+dataBytesPerLine) + finalNOPByte];
+	memset(transmitBuffer,0x0,sizeof(transmitBuffer));
+	#if 1
 
 	register uint8_t *ptr = vRAM;
 	register uint8_t line = 0;
 	register uint32_t idx;
+	int bufferCounter=1;
+	int x=0;
 
-	SMLCD_SCS_H;
 	// Send "Write Line" command
-	HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_WRITE, 1, 100);
+	transmitBuffer[0]=SMLCD_CMD_WRITE;
+	//HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_WRITE, 1, 100);
 	//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_WRITE);
 	switch (lcd_orientation) {
 		case LCD_ORIENT_CW:
 			line = SCR_H + 1;
 			while (--line > 0) {
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, __reverse8bit(line), 1, 100);
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, ptr, SCR_W >> 3, 100);
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+				transmitBuffer[bufferCounter]=__reverse8bit(line);
+				bufferCounter++;
+				//HAL_SPI_Transmit(&SMLCD_SPI_PORT, __reverse8bit(line), 1, 100);
+				for(x=0;x<(SCR_W >> 3);x++){
+					transmitBuffer[bufferCounter]=ptr;
+					ptr++;
+					bufferCounter++;
+				}
+				//HAL_SPI_Transmit(&SMLCD_SPI_PORT, ptr, SCR_W >> 3, 100);
+				transmitBuffer[bufferCounter]=SMLCD_CMD_NOP;
+
+				//HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
 				//SPI_SendRecv(&SMLCD_SPI_PORT, __reverse8bit(line));
 				//SPI_SendBuf(&SMLCD_SPI_PORT, ptr, SCR_W >> 3);
 				//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_NOP);
-				ptr += SCR_W >> 3;
+				//ptr += SCR_W >> 3;
 			}
 			break;
 		case LCD_ORIENT_CCW:
@@ -165,18 +192,31 @@ void SMLCD_Flush(void) {
 		default:
 			line = 0;
 			while (line++ < SCR_H + 1) {
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, __reverse8bit(line), 1, 100);
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, ptr, SCR_W >> 3, 100);
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+				//HAL_SPI_Transmit(&SMLCD_SPI_PORT, __reverse8bit(line), 1, 100);
+				//HAL_SPI_Transmit(&SMLCD_SPI_PORT, ptr, SCR_W >> 3, 100);
+				//HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+				transmitBuffer[bufferCounter]=__reverse8bit(line);
+				bufferCounter++;
+				for(x=0;x<(SCR_W >> 3);x++){
+					transmitBuffer[bufferCounter]=*ptr;
+					ptr++;
+					bufferCounter++;
+					if((bufferCounter%10)==0){
+						HAL_Delay(5);
+					}
+				}
+				transmitBuffer[bufferCounter]=SMLCD_CMD_NOP;
 				//SPI_SendRecv(&SMLCD_SPI_PORT, __reverse8bit(line));
 				//SPI_SendBuf(&SMLCD_SPI_PORT, ptr, SCR_W >> 3);
 				//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_NOP);
-				ptr += SCR_W >> 3;
+				//ptr += SCR_W >> 3;
 			}
 			break;
 	}
 	// One more trailer after last string has been transmitted
-	HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+	transmitBuffer[bufferCounter] = SMLCD_CMD_NOP;
+	HAL_SPI_Transmit(&SMLCD_SPI_PORT, (uint8_t *)transmitBuffer, sizeof(transmitBuffer), 100);
+	//HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
 	//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_NOP);
 	SMLCD_SCS_L;
 
@@ -303,25 +343,17 @@ void SMLCD_Orientation(uint8_t orientation) {
 // Clear the vRAM memory
 // note: size of video buffer must be a multiple of 4
 void LCD_Clear(void) {
-	int x=0;
 #if 0
 	// This variant can be faster, speed depends on libraries used
 	// But also needs include of "string.h"
-	memset(vRAM, 0x0, (sizeof(vRAM) >> 2));
-	//memset(vRAM, 0xFFFFFFFF, sizeof(vRAM) >> 2);
+	//memset(vRAM, 0x0, (sizeof(vRAM) >> 2));
+	memset(vRAM, 0xFFFFFFFF, sizeof(vRAM) >> 2);
 #else
 	register uint32_t *ptr = (uint32_t *)vRAM;
 	register uint32_t i = sizeof(vRAM) >> 2;
 
 	while (i--) {
-		if(x){
-			*ptr++ = 0xFFFFFFFF;
-			x=0;
-		}
-		else{
-			*ptr++ = 0x0;
-			x=1;
-		}
+		*ptr++ = 0xFFFFFFFF;
 	}
 #endif
 }
@@ -1371,4 +1403,168 @@ void LCD_InvertFull(void) {
 	while (i--) {
 		*ptr++ ^= 0xFFFFFFFF;
 	}
+}
+
+void LCD_BlackWhite(int color){
+	 static uint8_t LCD_Blink_White1 = 0b00011000;
+	 static uint8_t LCD_Blink_White2 = 0b00000000;
+	 static uint8_t LCD_Blink_Black1 = 0b00010000;
+	 static uint8_t LCD_Blink_Black2 = 0b00000000;
+	 uint8_t bytesSent[2];
+	 SMLCD_SCS_H;
+	 //HAL_Delay(1);
+	 if(color){
+		 bytesSent[0] = LCD_Blink_White1;
+		 bytesSent[1] = LCD_Blink_White2;
+		 HAL_SPI_Transmit(&SMLCD_SPI_PORT, (uint8_t*)&bytesSent, sizeof(bytesSent), 100);
+	 }
+	 else{
+		 bytesSent[0] = LCD_Blink_Black1;
+		 bytesSent[1] = LCD_Blink_Black2;
+		 HAL_SPI_Transmit(&SMLCD_SPI_PORT, (uint8_t*)&bytesSent, sizeof(bytesSent), 100);
+	 }
+	 //HAL_Delay(1);
+	 SMLCD_SCS_L;
+}
+void LCD_DrawSomeLinesBatchLine(){
+
+	 static uint8_t LCD_Green = 0b01000100;
+	 static uint8_t LCD_White = 0b11101110;
+	 static uint8_t LCD_Blue = 0b00100010;
+	 static uint8_t LCD_Red = 0b10001000;
+	 static uint8_t LCD_Black = 0b00000000;
+	 static uint8_t update_Line_CMD = 0b10010000;
+	 static uint8_t update_Line_0 = 0b00000000;
+	 static uint8_t update_dummy = 0b00000000;
+	 memset(transmitBuffer,0x0,sizeof(transmitBuffer));
+
+	 int x;
+	 static int y,z;
+	 transmitBuffer[0]=update_Line_CMD;
+	 uint8_t test[202];
+	 for(y=1; y < 241;++y){
+		   x=1;
+		   test[0]=update_Line_0+y;
+		   if(y<40){
+			   while(x<201){
+				   test[x] = LCD_Green;
+				   x++;
+			   }
+		   }
+		   else if(y<80){
+			   while(x<201){
+				   test[x] = LCD_White;
+				   x++;
+			   }
+		   }
+		   else if(y<120){
+			   while(x<201){
+				   test[x] = LCD_Blue;
+				   x++;
+			   }
+		   }
+		   else if(y<160){
+			   while(x<201){
+				   test[x] = LCD_Red;
+				   x++;
+			   }
+		   }
+		   else if(y<200){
+			   while(x<201){
+				   test[x] = LCD_Black;
+				   x++;
+			   }
+		   }
+		   else{
+			   while(x<201){
+				   if((x%2)==0){
+					   test[x] = LCD_Blue;
+				   }
+				   else{
+					   test[x] = LCD_Red;
+				   }
+				   x++;
+			   }
+		   }
+		   test[201] = update_dummy;
+		   for(z=0;z<202;z++){
+			   transmitBuffer[z+1+(y-1)*202] = test[z];
+		   }
+		   if(y==240){
+			   transmitBuffer[sizeof(transmitBuffer)-1] = update_dummy;
+
+			   SMLCD_SCS_H;
+		   	   HAL_SPI_Transmit(&hspi4, (uint8_t *)transmitBuffer, sizeof(transmitBuffer), 100);
+		   	   SMLCD_SCS_L;
+		   	   HAL_Delay(5);
+		   }
+	   }
+}
+void LCD_DrawSomeLinesSingleLine(){
+
+	 static uint8_t LCD_Green = 0b01000100;
+	 static uint8_t LCD_White = 0b11101110;
+	 static uint8_t LCD_Blue = 0b00100010;
+	 static uint8_t LCD_Red = 0b10001000;
+	 static uint8_t LCD_Black = 0b00000000;
+	 static uint8_t update_Line_CMD = 0b10010000;
+	 static uint8_t update_Line_0 = 0b00000000;
+	 static uint8_t update_dummy = 0b00000000;
+
+
+	 int x=2;
+	 static int y;
+	 uint8_t test[204];
+	 for(y=1; y < 241;++y){
+		   x=2;
+		   test[0]=update_Line_CMD;
+		   test[1]=update_Line_0+y;
+		   if(y<40){
+			   while(x<202){
+				   test[x] = LCD_Green;
+				   x++;
+			   }
+		   }
+		   else if(y<80){
+			   while(x<202){
+				   test[x] = LCD_White;
+				   x++;
+			   }
+		   }
+		   else if(y<120){
+			   while(x<202){
+				   test[x] = LCD_Blue;
+				   x++;
+			   }
+		   }
+		   else if(y<160){
+			   while(x<202){
+				   test[x] = LCD_Red;
+				   x++;
+			   }
+		   }
+		   else if(y<200){
+			   while(x<202){
+				   test[x] = LCD_Black;
+				   x++;
+			   }
+		   }
+		   else{
+			   while(x<202){
+				   if((x%2)==0){
+					   test[x] = LCD_Blue;
+				   }
+				   else{
+					   test[x] = LCD_Red;
+				   }
+				   x++;
+			   }
+		   }
+		   test[203] = update_dummy;
+		   test[204] = update_dummy;
+	   	   SMLCD_SCS_H;
+		   HAL_SPI_Transmit(&hspi4, (uint8_t *)test, sizeof(test), 100);
+	   	   SMLCD_SCS_L;
+		   HAL_Delay(5);
+	   }
 }

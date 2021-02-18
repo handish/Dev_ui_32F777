@@ -87,7 +87,7 @@ osThreadId_t DatScreenBlinkHandle;
 const osThreadAttr_t DatScreenBlink_attributes = {
   .name = "DatScreenBlink",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 1000 * 4
+  .stack_size = 10000 * 4
 };
 /* Definitions for gpioInputRead */
 osThreadId_t gpioInputReadHandle;
@@ -107,6 +107,14 @@ uint8_t gpioInputBuf[12];
 uint8_t gpioOutputState[14];
 
 static uint32_t i, j, k;
+
+int commandByte=1;
+int lineByte=1;
+int lineAmount=SCR_H;
+int nopBytesPerLine= 1;
+int dataBytesPerLine=SCR_W/8;
+int finalNOPByte=1;
+uint8_t transmitBuffer[48482];
 
 uint8_t inputButtonSet = 5; //set to a higher value than any other button priority. 5 is the "unused" state
 /* USER CODE END PV */
@@ -148,6 +156,9 @@ void uartTransmitFloat(float *number, int uart);
 uint8_t *getInputGPIOState(void);
 void setOutputGPIOState(int gpio, int state);
 void outputGPIOBufInitialization();
+//void LCD_DrawSomeLinesSingleLine();
+//void LCD_DrawSomeLinesBatchLine();
+//void LCD_BlackWhite(int color);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -241,8 +252,10 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
  char spi_buf[20];
- static uint16_t LCD_Blink_White = 0b0001100000000000;
- static uint16_t LCD_Blink_Black = 0b0001000000000000;
+ static uint8_t LCD_Blink_White1 = 0b00011000;
+ static uint8_t LCD_Blink_White2 = 0b00000000;
+ static uint8_t LCD_Blink_Black1 = 0b00010000;
+ static uint8_t LCD_Blink_Black2 = 0b00000000;
  static uint16_t LCD_Green = 0b0100010001000100;
  static uint16_t LCD_White = 0b1110111011101110;
  static uint16_t LCD_Red = 0b1000100010001000;
@@ -354,12 +367,13 @@ int main(void)
     setErrorLED(9,ON);
     HAL_Delay(1000);
     setErrorLED(9,OFF);
+	SMLCD_Enable();
 
 	SMLCD_InitGPIO();
-	SMLCD_Init();
+	SMLCD_Init(hspi4);
 	SMLCD_Enable();
 	SMLCD_Clear();
-#define ORI 0
+/*#define ORI 0
 	uint8_t ori;
 #if (ORI == 0)
 	ori = LCD_ORIENT_NORMAL;
@@ -383,6 +397,7 @@ int main(void)
 
 	//SMLCD_Clear();
 	SMLCD_Flush();
+	HAL_Delay(2000);
 	if (scr_width > scr_height) {
 		j = scr_height / 2;
 	} else {
@@ -392,7 +407,7 @@ int main(void)
 		LCD_Circle((scr_width / 2) - 1, (scr_height / 2) - 1, i);
 	}
 	SMLCD_Flush();
-	HAL_Delay(100);
+	HAL_Delay(2000);*/
 
     //int check = writeI2CRegister(LED.address,LED.led0_reg,blah2,1,1);
   //  if(check){
@@ -462,7 +477,7 @@ int main(void)
 
 		  //uartTransmitChar("hello\r\n",7);
 		  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-		  HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_White, 1, 100);
+		  //HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_White, 1, 100);
 		  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
 	  }
 	  else{
@@ -470,7 +485,7 @@ int main(void)
 		  x=0;
 		  //uartTransmitChar("here\r\n",7);
 		  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-		  HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_Black, 1, 100);
+		  //HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_Black, 1, 100);
 		  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
 	  }
     /* USER CODE END WHILE */
@@ -518,12 +533,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -856,7 +871,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x007074AF;
+  hi2c1.Init.Timing = 0x00101622;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -902,7 +917,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x007074AF;
+  hi2c2.Init.Timing = 0x00101622;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -948,7 +963,7 @@ static void MX_I2C3_Init(void)
 
   /* USER CODE END I2C3_Init 1 */
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x007074AF;
+  hi2c3.Init.Timing = 0x00101622;
   hi2c3.Init.OwnAddress1 = 0;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -994,7 +1009,7 @@ static void MX_I2C4_Init(void)
 
   /* USER CODE END I2C4_Init 1 */
   hi2c4.Instance = I2C4;
-  hi2c4.Init.Timing = 0x007074AF;
+  hi2c4.Init.Timing = 0x00101622;
   hi2c4.Init.OwnAddress1 = 0;
   hi2c4.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c4.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -1081,7 +1096,7 @@ static void MX_SPI4_Init(void)
   hspi4.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi4.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi4.Init.NSS = SPI_NSS_SOFT;
-  hspi4.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi4.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi4.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi4.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi4.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -1771,7 +1786,167 @@ void configureLEDDriver(){
 	writeI2CRegister(LED.address,LED.led8_pwm,LED.pwm,1,LED.i2cBank);
 	writeI2CRegister(LED.address,LED.led9_pwm,LED.pwm,1,LED.i2cBank);
 }
+/*void LCD_DrawSomeLinesSingleLine(){
 
+	 static uint8_t LCD_Green = 0b01000100;
+	 static uint8_t LCD_White = 0b11101110;
+	 static uint8_t LCD_Blue = 0b00100010;
+	 static uint8_t LCD_Red = 0b10001000;
+	 static uint8_t LCD_Black = 0b00000000;
+	 static uint8_t update_Line_CMD = 0b10010000;
+	 static uint8_t update_Line_0 = 0b00000000;
+	 static uint8_t update_dummy = 0b00000000;
+
+
+	 int x=2;
+	 static int y;
+	 uint8_t test[204];
+	 for(y=1; y < 241;++y){
+		   x=2;
+		   test[0]=update_Line_CMD;
+		   test[1]=update_Line_0+y;
+		   if(y<40){
+			   while(x<202){
+				   test[x] = LCD_Green;
+				   x++;
+			   }
+		   }
+		   else if(y<80){
+			   while(x<202){
+				   test[x] = LCD_White;
+				   x++;
+			   }
+		   }
+		   else if(y<120){
+			   while(x<202){
+				   test[x] = LCD_Blue;
+				   x++;
+			   }
+		   }
+		   else if(y<160){
+			   while(x<202){
+				   test[x] = LCD_Red;
+				   x++;
+			   }
+		   }
+		   else if(y<200){
+			   while(x<202){
+				   test[x] = LCD_Black;
+				   x++;
+			   }
+		   }
+		   else{
+			   while(x<202){
+				   if((x%2)==0){
+					   test[x] = LCD_Blue;
+				   }
+				   else{
+					   test[x] = LCD_Red;
+				   }
+				   x++;
+			   }
+		   }
+		   test[203] = update_dummy;
+		   test[204] = update_dummy;
+		   HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
+		   HAL_SPI_Transmit(&hspi4, (uint8_t *)test, sizeof(test), 100);
+		   HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
+		   HAL_Delay(5);
+	   }
+}*/
+/*void LCD_DrawSomeLinesBatchLine(){
+
+	 static uint8_t LCD_Green = 0b01000100;
+	 static uint8_t LCD_White = 0b11101110;
+	 static uint8_t LCD_Blue = 0b00100010;
+	 static uint8_t LCD_Red = 0b10001000;
+	 static uint8_t LCD_Black = 0b00000000;
+	 static uint8_t update_Line_CMD = 0b10010000;
+	 static uint8_t update_Line_0 = 0b00000000;
+	 static uint8_t update_dummy = 0b00000000;
+	 memset(transmitBuffer,0x0,sizeof(transmitBuffer));
+
+	 int x;
+	 static int y,z;
+	 transmitBuffer[0]=update_Line_CMD;
+	 uint8_t test[202];
+	 for(y=1; y < 241;++y){
+		   x=1;
+		   test[0]=update_Line_0+y;
+		   if(y<40){
+			   while(x<201){
+				   test[x] = LCD_Green;
+				   x++;
+			   }
+		   }
+		   else if(y<80){
+			   while(x<201){
+				   test[x] = LCD_White;
+				   x++;
+			   }
+		   }
+		   else if(y<120){
+			   while(x<201){
+				   test[x] = LCD_Blue;
+				   x++;
+			   }
+		   }
+		   else if(y<160){
+			   while(x<201){
+				   test[x] = LCD_Red;
+				   x++;
+			   }
+		   }
+		   else if(y<200){
+			   while(x<201){
+				   test[x] = LCD_Black;
+				   x++;
+			   }
+		   }
+		   else{
+			   while(x<201){
+				   if((x%2)==0){
+					   test[x] = LCD_Blue;
+				   }
+				   else{
+					   test[x] = LCD_Red;
+				   }
+				   x++;
+			   }
+		   }
+		   test[201] = update_dummy;
+		   for(z=0;z<202;z++){
+			   transmitBuffer[z+1+(y-1)*202] = test[z];
+		   }
+		   if(y==240){
+			   transmitBuffer[sizeof(transmitBuffer)-1] = update_dummy;
+
+		   	   HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
+		   	   HAL_SPI_Transmit(&hspi4, (uint8_t *)transmitBuffer, sizeof(transmitBuffer), 100);
+		   	   HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
+		   	   HAL_Delay(5);
+		   }
+	   }
+}*/
+/*void LCD_BlackWhite(int color){
+	 static uint8_t LCD_Blink_White1 = 0b00011000;
+	 static uint8_t LCD_Blink_White2 = 0b00000000;
+	 static uint8_t LCD_Blink_Black1 = 0b00010000;
+	 static uint8_t LCD_Blink_Black2 = 0b00000000;
+	 uint8_t bytesSent[2];
+	 SMLCD_SCS_H;
+	 if(color){
+		 bytesSent[0] = LCD_Blink_White1;
+		 bytesSent[1] = LCD_Blink_White2;
+		 HAL_SPI_Transmit(&hspi4, (uint8_t*)&bytesSent, sizeof(bytesSent), 100);
+	 }
+	 else{
+		 bytesSent[0] = LCD_Blink_Black1;
+		 bytesSent[1] = LCD_Blink_Black2;
+		 HAL_SPI_Transmit(&hspi4, (uint8_t*)&bytesSent, sizeof(bytesSent), 100);
+	 }
+	 SMLCD_SCS_L;
+}*/
 //Configures specified LED to either fully on or off.
 void setErrorLED(int led,_Bool change){
 	const uint8_t led0 = 0b00000001;
@@ -2036,26 +2211,16 @@ void GetDaScreenBlink(void *argument)
 {
   /* USER CODE BEGIN GetDaScreenBlink */
   /* Infinite loop */
-	 static uint16_t LCD_Blink_White = 0b0001100000000000;
-	 static uint16_t LCD_Blink_Black = 0b0001000000000000;
+	 static uint8_t LCD_Blink_White1 = 0b00011000;
+	 static uint8_t LCD_Blink_White2 = 0b00000000;
+	 static uint8_t LCD_Blink_Black1 = 0b00010000;
+	 static uint8_t LCD_Blink_Black2 = 0b00000000;
+	 //static uint16_t LCD_Blink_White = 0b0001100000000000;
+	 //static uint16_t LCD_Blink_Black = 0b0001000000000000;
 	 int x = 0;
 	 float *adcValues;
   for(;;)
   {
-	  	 /* setOutputGPIOState(outputGPIOs.mcu3V3_0,x);
-	  	  setOutputGPIOState(outputGPIOs.mcu3V3_1,!x);
-	  	  setOutputGPIOState(outputGPIOs.mcu3V3_2,x);
-	  	  setOutputGPIOState(outputGPIOs.mcu3V3_3,!x);
-	  	  setOutputGPIOState(outputGPIOs.configOut_0,x);
-	  	  setOutputGPIOState(outputGPIOs.configOut_1,!x);
-	  	  setOutputGPIOState(outputGPIOs.configOut_2,x);
-	  	  setOutputGPIOState(outputGPIOs.configOut_3,!x);
-	  	  setOutputGPIOState(outputGPIOs.out1V8_0,x);
-	  	  setOutputGPIOState(outputGPIOs.out1V8_1,!x);
-	  	  setOutputGPIOState(outputGPIOs.out1V8_2,x);
-	  	  setOutputGPIOState(outputGPIOs.out1V8_3,!x);
-	  	  setOutputGPIOState(outputGPIOs.odOut_0,x);
-	  	  setOutputGPIOState(outputGPIOs.odOut_1,!x); */
 	  	  if(inputButtonSet<5){
 	  		  inputButtonSet=5;
 	  	  }
@@ -2069,18 +2234,24 @@ void GetDaScreenBlink(void *argument)
 	 		  x=1;
 
 	 		  uartTransmitChar("hello\r\n",7);
-	 		  HAL_GPIO_TogglePin(LCD_SS_GPIO_Port,LCD_SS_Pin);
+	 		  //HAL_GPIO_TogglePin(LCD_SS_GPIO_Port,LCD_SS_Pin);
 	 		  //HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_White, 1, 100);
-	 		  HAL_GPIO_TogglePin(LCD_SS_GPIO_Port,LCD_SS_Pin);
+	 		  //HAL_SPI_Transmit(&hspi4, (uint8_t *)&LCD_Blink_White1, 1, 100);
+	 		  //HAL_SPI_Transmit(&hspi4, (uint8_t *)&LCD_Blink_White2, 1, 100);
+	 		  //HAL_GPIO_TogglePin(LCD_SS_GPIO_Port,LCD_SS_Pin);
 	 	  }
 	 	  else{
 	 		  //HAL_GPIO_WritePin(GPIOI,MCU_HEARTBEAT_Pin,GPIO_PIN_RESET);
 	 		  x=0;
 	 		  uartTransmitChar("here\r\n",7);
-	 		  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-	 		  //HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_Black, 1, 100);
-	 		  HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
+	 		  //HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
+	 		  //HAL_SPI_Transmit(&hspi4, (uint8_t *)&LCD_Blink_Black1, 1, 100);
+	 		 //HAL_SPI_Transmit(&hspi4, (uint8_t *)&LCD_Blink_Black2, 1, 100);
+	 		  //HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
 	 	  }
+	 	  //LCD_BlackWhite(x);
+	 	  SMLCD_Clear();
+	 	  LCD_DrawSomeLinesSingleLine();
 	 	  osDelay(400);
   }
   /* USER CODE END GetDaScreenBlink */

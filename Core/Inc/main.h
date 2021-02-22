@@ -255,6 +255,122 @@ void Error_Handler(void);
 #define SPARE_SW_EN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
+/*LED defines*/
+#define ON 		1
+#define OFF		0
+
+/* Button Press Decode Defines */
+#define UP		1
+#define	DWN		2
+#define BACK	3
+#define SEL		4
+
+/* Button Flag definition (shared between Button Task and Navigation Task) */
+//extern uint8_t button_press;
+
+/* Navigation control defines */
+#define MENU_TOP							1
+#define MAX_MENU_ITEMS_MAIN_MENU			3
+#define MAX_MENU_ITEMS_BOOT_MENU			5
+#define MAX_MENU_ITEMS_STATUS_MENU			3
+#define MAX_MENU_ITEMS_SYSTEM_INFO_MENU		2
+
+//extern uint8_t curr_highlight;
+
+#define NOTIFY_NOCLEAR			0x00
+#define	NOTIFY_CLEARALL			0xFF
+#define	NOTIFY_BTN_MASK			0x0F
+#define	NOTIFY_MENU_MASK		0xF0
+#define NOTIFY_RUN_MENU_MASK	0xF00
+#define NOTIFY_MENU_BIT			4
+#define NOTIFY_MENU_RUN_BIT		8
+
+#define BOOT_MENU			2
+#define MAIN_MENU			1
+#define	STATUS_MENU			3
+#define	SYSTEM_INFO_MENU	4
+
+#define NO_BTN_PRESS		5
+
+struct LED{
+	uint8_t address;
+	uint8_t mode0_reg;
+	uint8_t led0_reg;
+	uint8_t led1_reg;
+	uint8_t led2_reg;
+	uint8_t led3_reg;
+	uint8_t iref_reg;
+	uint8_t mode0_oscon_value;
+	uint8_t led7_pwm;
+	uint8_t led8_pwm;
+	uint8_t led9_pwm;
+	uint8_t pwm;
+	int i2cBank;
+};
+static struct LED LED = {0x60 << 1, 0x00, 0x14, 0x15, 0x16, 0x17, 0x1C,0x11,0x09,0x0A,0x0B, 0x08,1};
+
+struct inputGPIOs{
+	int input0;
+	int input1;
+	int input2;
+	int input3;
+	int input4;
+	int input5;
+	int input6;
+	int input7;
+	int input8;
+	int input9;
+	int input10;
+	int input11;
+};
+static struct inputGPIOs inputGPIOs = {0,1,2,3,4,5,6,7,8,9,10,11};
+
+struct outputGPIOs{
+	int mcu3V3_0;
+	int mcu3V3_1;
+	int mcu3V3_2;
+	int mcu3V3_3; //also known as uart mux ctrl in the schematic
+	int out1V8_0;
+	int out1V8_1;
+	int out1V8_2;
+	int out1V8_3;
+	int configOut_0;
+	int configOut_1;
+	int configOut_2;
+	int configOut_3;
+	int odOut_0;
+	int odOut_1;
+};
+static struct outputGPIOs outputGPIOs = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
+
+
+struct Adc{
+	int adc0;
+	int adc1;
+	int adc2;
+	int adc3;
+	int adc4;
+	int adc5;
+	int adc6;
+	int adc7;
+	int adc8;
+	int adc9;
+	int adc10;
+	int adc11;
+	int adc12;
+	int adc13;
+	int adc14;
+	int adc15;
+	int spareSpiADC;
+	int spareUartADC;
+	int configADC;
+	int zionADC;
+	int spareI2cADC;
+	float adcDivisor;
+	int adcResistorDivider;
+	int systemResistorDivider;
+};
+static struct Adc Adc = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ,19, 20, 3.3/4096, 3,2};
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

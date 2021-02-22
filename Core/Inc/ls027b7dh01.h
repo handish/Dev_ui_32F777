@@ -186,7 +186,9 @@ void LCD_DrawBitmap(uint16_t X, uint16_t Y, uint16_t W, uint16_t H, const uint8_
 void LCD_Invert(uint16_t X, uint16_t Y, uint16_t W, uint16_t H);
 void LCD_InvertFull(void);
 void LCD_BlackWhite(int color);
-void LCD_DrawSomeLinesBatchLine();
-void LCD_DrawSomeLinesSingleLine();
+void LCD_DrawSomeLinesBatchLine4Bit();
+void LCD_DrawSomeLinesSingleLine4Bit();
+void LCD_DrawSomeLinesSingleLine1Bit();
+void drawUpDownArrow(uint16_t X, uint16_t Y, uint16_t S, uint16_t dir);
 
 #endif // __LS027B7DH01_H

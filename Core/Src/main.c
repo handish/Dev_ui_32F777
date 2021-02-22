@@ -96,6 +96,13 @@ const osThreadAttr_t gpioInputRead_attributes = {
   .priority = (osPriority_t) osPriorityLow2,
   .stack_size = 128 * 4
 };
+/* Definitions for navigationTask */
+osThreadId_t navigationTaskHandle;
+const osThreadAttr_t navigationTask_attributes = {
+  .name = "navigationTask",
+  .priority = (osPriority_t) osPriorityHigh,
+  .stack_size = 128 * 4
+};
 /* USER CODE BEGIN PV */
 uint16_t adc1_buf[ADC_BUF_LEN];
 uint16_t adc2_buf[ADC_BUF_LEN];
@@ -116,7 +123,7 @@ int dataBytesPerLine=SCR_W/8;
 int finalNOPByte=1;
 uint8_t transmitBuffer[48482];
 
-uint8_t inputButtonSet = 5; //set to a higher value than any other button priority. 5 is the "unused" state
+uint8_t inputButtonSet = NO_BTN_PRESS; //set to a higher value than any other button priority. 5 is the "unused" state
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -143,6 +150,7 @@ void startHeartbeat(void *argument);
 void startADCRead(void *argument);
 void GetDaScreenBlink(void *argument);
 void startGpioInputRead(void *argument);
+void startNavigationTask(void *argument);
 
 /* USER CODE BEGIN PFP */
 void uartTransmitChar(char *message,int uart);
@@ -163,85 +171,7 @@ void outputGPIOBufInitialization();
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-struct LED{
-	uint8_t address;
-	uint8_t mode0_reg;
-	uint8_t led0_reg;
-	uint8_t led1_reg;
-	uint8_t led2_reg;
-	uint8_t led3_reg;
-	uint8_t iref_reg;
-	uint8_t mode0_oscon_value;
-	uint8_t led7_pwm;
-	uint8_t led8_pwm;
-	uint8_t led9_pwm;
-	uint8_t pwm;
-	int i2cBank;
-};
-static struct LED LED = {0x60 << 1, 0x00, 0x14, 0x15, 0x16, 0x17, 0x1C,0x11,0x09,0x0A,0x0B, 0x08,1};
 
-struct inputGPIOs{
-	int input0;
-	int input1;
-	int input2;
-	int input3;
-	int input4;
-	int input5;
-	int input6;
-	int input7;
-	int input8;
-	int input9;
-	int input10;
-	int input11;
-};
-static struct inputGPIOs inputGPIOs = {0,1,2,3,4,5,6,7,8,9,10,11};
-
-struct outputGPIOs{
-	int mcu3V3_0;
-	int mcu3V3_1;
-	int mcu3V3_2;
-	int mcu3V3_3; //also known as uart mux ctrl in the schematic
-	int out1V8_0;
-	int out1V8_1;
-	int out1V8_2;
-	int out1V8_3;
-	int configOut_0;
-	int configOut_1;
-	int configOut_2;
-	int configOut_3;
-	int odOut_0;
-	int odOut_1;
-};
-static struct outputGPIOs outputGPIOs = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};
-
-
-struct Adc{
-	int adc0;
-	int adc1;
-	int adc2;
-	int adc3;
-	int adc4;
-	int adc5;
-	int adc6;
-	int adc7;
-	int adc8;
-	int adc9;
-	int adc10;
-	int adc11;
-	int adc12;
-	int adc13;
-	int adc14;
-	int adc15;
-	int spareSpiADC;
-	int spareUartADC;
-	int configADC;
-	int zionADC;
-	int spareI2cADC;
-	float adcDivisor;
-	int adcResistorDivider;
-	int systemResistorDivider;
-};
-static struct Adc Adc = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ,19, 20, 3.3/4096, 3,2};
 /* USER CODE END 0 */
 
 /**
@@ -251,27 +181,8 @@ static struct Adc Adc = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 1
 int main(void)
 {
   /* USER CODE BEGIN 1 */
- char spi_buf[20];
- static uint8_t LCD_Blink_White1 = 0b00011000;
- static uint8_t LCD_Blink_White2 = 0b00000000;
- static uint8_t LCD_Blink_Black1 = 0b00010000;
- static uint8_t LCD_Blink_Black2 = 0b00000000;
- static uint16_t LCD_Green = 0b0100010001000100;
- static uint16_t LCD_White = 0b1110111011101110;
- static uint16_t LCD_Red = 0b1000100010001000;
- static uint16_t update_Line1 = 0b1001000010010001;
- static uint16_t update_Line2 = 0b1001000010010011;
- static uint16_t update_Line3 = 0b1001000010010010;
- static uint16_t update_dummy = 0b0000000000000000;
- static uint16_t LCD_Cleared = 0b0010000000000000;
- static _Bool ON = 1;
- static _Bool OFF = 0;
- char uartBuf[50];
- int uartBufLen;
- static const uint8_t LED_ADDR = 0x60 <<1;
- HAL_StatusTypeDef ret;
- uint8_t buf[12];
- int16_t val;
+ //static _Bool ON = 1;
+ //static _Bool OFF = 0;
 
 
   /* USER CODE END 1 */
@@ -317,41 +228,8 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
-//  HAL_GPIO_WritePin(GPIOJ,LCD_DISP_Pin,GPIO_PIN_SET);
-//    HAL_GPIO_WritePin(GPIOJ,LCD_EXTMODE_Pin,GPIO_PIN_RESET);
-//    HAL_Delay(1);
-//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-//    HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Clear, 1, 100);
-//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-//    HAL_Delay(1);
    int x=1;
-//    uint16_t test[102];
-//    test[0] = update_Line1;
-//    uartTransmitInt(test[0],7);
-//    while (x<101){
-//  	test[x] = LCD_Green;
-//  	x=x+1;
-//    }
-//    x=0;
-//    test[61] = update_dummy;
-//    uartTransmitInt(test,7);
-//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-//    HAL_SPI_Transmit(&hspi4, (uint16_t *)test, 102, 100);
-//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-//    HAL_Delay(5);
-//    test[0]=update_Line2;
-//    uartTransmitInt(test[0],7);
-//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-//    HAL_SPI_Transmit(&hspi4, (uint16_t *)test, 102, 100);
-//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-//    HAL_Delay(5);
-//    test[0]=update_Line3;
-//    uartTransmitInt(test[0],7);
-//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-//    HAL_SPI_Transmit(&hspi4, (uint16_t *)test, 102, 100);
-//    HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-//    HAL_GPIO_WritePin(GPIOH,FRONT_LED_CTRL_Pin,GPIO_PIN_SET);
-//    HAL_Delay(5000);
+
 
 
   configureLEDDriver();
@@ -367,56 +245,7 @@ int main(void)
     setErrorLED(9,ON);
     HAL_Delay(1000);
     setErrorLED(9,OFF);
-	SMLCD_Enable();
 
-	SMLCD_InitGPIO();
-	SMLCD_Init(hspi4);
-	SMLCD_Enable();
-	SMLCD_Clear();
-/*#define ORI 0
-	uint8_t ori;
-#if (ORI == 0)
-	ori = LCD_ORIENT_NORMAL;
-#elif (ORI == 1)
-	ori = LCD_ORIENT_180;
-#elif (ORI == 2)
-	ori = LCD_ORIENT_CW;
-#else
-	ori = LCD_ORIENT_CCW;
-#endif
-	SMLCD_Orientation(ori);
-
-
-	// Clear video buffer
-	LCD_Clear();
-
-
-	LCD_PixelMode = LCD_PSET;
-//	LCD_PixelMode = LCD_PRES;
-//	LCD_PixelMode = LCD_PINV;
-
-	//SMLCD_Clear();
-	SMLCD_Flush();
-	HAL_Delay(2000);
-	if (scr_width > scr_height) {
-		j = scr_height / 2;
-	} else {
-		j = scr_width / 2;
-	}
-	for (i = 4; i < j; i += 4) {
-		LCD_Circle((scr_width / 2) - 1, (scr_height / 2) - 1, i);
-	}
-	SMLCD_Flush();
-	HAL_Delay(2000);*/
-
-    //int check = writeI2CRegister(LED.address,LED.led0_reg,blah2,1,1);
-  //  if(check){
-  //	  blah = readI2CRegister(LED.address,LED.led0_reg,1,1);
-  //	  uartTransmitInt(blah[0],7);
-  //  }
-  //  else{
-  //	  uartTransmitChar("Things didn't go well.\r\n",7);
-  //  }
 
   /* USER CODE END 2 */
 
@@ -451,6 +280,9 @@ int main(void)
 
   /* creation of gpioInputRead */
   gpioInputReadHandle = osThreadNew(startGpioInputRead, NULL, &gpioInputRead_attributes);
+
+  /* creation of navigationTask */
+  navigationTaskHandle = osThreadNew(startNavigationTask, NULL, &navigationTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -533,12 +365,12 @@ void SystemClock_Config(void)
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSE;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     Error_Handler();
   }
@@ -871,7 +703,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x00101622;
+  hi2c1.Init.Timing = 0x007074AF;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -917,7 +749,7 @@ static void MX_I2C2_Init(void)
 
   /* USER CODE END I2C2_Init 1 */
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x00101622;
+  hi2c2.Init.Timing = 0x007074AF;
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -963,7 +795,7 @@ static void MX_I2C3_Init(void)
 
   /* USER CODE END I2C3_Init 1 */
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x00101622;
+  hi2c3.Init.Timing = 0x10303DEA;
   hi2c3.Init.OwnAddress1 = 0;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -1009,7 +841,7 @@ static void MX_I2C4_Init(void)
 
   /* USER CODE END I2C4_Init 1 */
   hi2c4.Instance = I2C4;
-  hi2c4.Init.Timing = 0x00101622;
+  hi2c4.Init.Timing = 0x007074AF;
   hi2c4.Init.OwnAddress1 = 0;
   hi2c4.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c4.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -1593,6 +1425,13 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+int __io_putchar(int ch)
+{
+	HAL_UART_Transmit(&huart7, (uint8_t *)&ch, 1, 0xFFFF);
+
+	return ch;
+}
+
 void outputGPIOBufInitialization(){
 	memset(gpioOutputState,0,sizeof(gpioOutputState));
 }
@@ -1786,167 +1625,7 @@ void configureLEDDriver(){
 	writeI2CRegister(LED.address,LED.led8_pwm,LED.pwm,1,LED.i2cBank);
 	writeI2CRegister(LED.address,LED.led9_pwm,LED.pwm,1,LED.i2cBank);
 }
-/*void LCD_DrawSomeLinesSingleLine(){
 
-	 static uint8_t LCD_Green = 0b01000100;
-	 static uint8_t LCD_White = 0b11101110;
-	 static uint8_t LCD_Blue = 0b00100010;
-	 static uint8_t LCD_Red = 0b10001000;
-	 static uint8_t LCD_Black = 0b00000000;
-	 static uint8_t update_Line_CMD = 0b10010000;
-	 static uint8_t update_Line_0 = 0b00000000;
-	 static uint8_t update_dummy = 0b00000000;
-
-
-	 int x=2;
-	 static int y;
-	 uint8_t test[204];
-	 for(y=1; y < 241;++y){
-		   x=2;
-		   test[0]=update_Line_CMD;
-		   test[1]=update_Line_0+y;
-		   if(y<40){
-			   while(x<202){
-				   test[x] = LCD_Green;
-				   x++;
-			   }
-		   }
-		   else if(y<80){
-			   while(x<202){
-				   test[x] = LCD_White;
-				   x++;
-			   }
-		   }
-		   else if(y<120){
-			   while(x<202){
-				   test[x] = LCD_Blue;
-				   x++;
-			   }
-		   }
-		   else if(y<160){
-			   while(x<202){
-				   test[x] = LCD_Red;
-				   x++;
-			   }
-		   }
-		   else if(y<200){
-			   while(x<202){
-				   test[x] = LCD_Black;
-				   x++;
-			   }
-		   }
-		   else{
-			   while(x<202){
-				   if((x%2)==0){
-					   test[x] = LCD_Blue;
-				   }
-				   else{
-					   test[x] = LCD_Red;
-				   }
-				   x++;
-			   }
-		   }
-		   test[203] = update_dummy;
-		   test[204] = update_dummy;
-		   HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-		   HAL_SPI_Transmit(&hspi4, (uint8_t *)test, sizeof(test), 100);
-		   HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-		   HAL_Delay(5);
-	   }
-}*/
-/*void LCD_DrawSomeLinesBatchLine(){
-
-	 static uint8_t LCD_Green = 0b01000100;
-	 static uint8_t LCD_White = 0b11101110;
-	 static uint8_t LCD_Blue = 0b00100010;
-	 static uint8_t LCD_Red = 0b10001000;
-	 static uint8_t LCD_Black = 0b00000000;
-	 static uint8_t update_Line_CMD = 0b10010000;
-	 static uint8_t update_Line_0 = 0b00000000;
-	 static uint8_t update_dummy = 0b00000000;
-	 memset(transmitBuffer,0x0,sizeof(transmitBuffer));
-
-	 int x;
-	 static int y,z;
-	 transmitBuffer[0]=update_Line_CMD;
-	 uint8_t test[202];
-	 for(y=1; y < 241;++y){
-		   x=1;
-		   test[0]=update_Line_0+y;
-		   if(y<40){
-			   while(x<201){
-				   test[x] = LCD_Green;
-				   x++;
-			   }
-		   }
-		   else if(y<80){
-			   while(x<201){
-				   test[x] = LCD_White;
-				   x++;
-			   }
-		   }
-		   else if(y<120){
-			   while(x<201){
-				   test[x] = LCD_Blue;
-				   x++;
-			   }
-		   }
-		   else if(y<160){
-			   while(x<201){
-				   test[x] = LCD_Red;
-				   x++;
-			   }
-		   }
-		   else if(y<200){
-			   while(x<201){
-				   test[x] = LCD_Black;
-				   x++;
-			   }
-		   }
-		   else{
-			   while(x<201){
-				   if((x%2)==0){
-					   test[x] = LCD_Blue;
-				   }
-				   else{
-					   test[x] = LCD_Red;
-				   }
-				   x++;
-			   }
-		   }
-		   test[201] = update_dummy;
-		   for(z=0;z<202;z++){
-			   transmitBuffer[z+1+(y-1)*202] = test[z];
-		   }
-		   if(y==240){
-			   transmitBuffer[sizeof(transmitBuffer)-1] = update_dummy;
-
-		   	   HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-		   	   HAL_SPI_Transmit(&hspi4, (uint8_t *)transmitBuffer, sizeof(transmitBuffer), 100);
-		   	   HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-		   	   HAL_Delay(5);
-		   }
-	   }
-}*/
-/*void LCD_BlackWhite(int color){
-	 static uint8_t LCD_Blink_White1 = 0b00011000;
-	 static uint8_t LCD_Blink_White2 = 0b00000000;
-	 static uint8_t LCD_Blink_Black1 = 0b00010000;
-	 static uint8_t LCD_Blink_Black2 = 0b00000000;
-	 uint8_t bytesSent[2];
-	 SMLCD_SCS_H;
-	 if(color){
-		 bytesSent[0] = LCD_Blink_White1;
-		 bytesSent[1] = LCD_Blink_White2;
-		 HAL_SPI_Transmit(&hspi4, (uint8_t*)&bytesSent, sizeof(bytesSent), 100);
-	 }
-	 else{
-		 bytesSent[0] = LCD_Blink_Black1;
-		 bytesSent[1] = LCD_Blink_Black2;
-		 HAL_SPI_Transmit(&hspi4, (uint8_t*)&bytesSent, sizeof(bytesSent), 100);
-	 }
-	 SMLCD_SCS_L;
-}*/
 //Configures specified LED to either fully on or off.
 void setErrorLED(int led,_Bool change){
 	const uint8_t led0 = 0b00000001;
@@ -2052,8 +1731,8 @@ void setErrorLED(int led,_Bool change){
 
 
 float* getADCValues(){
-	static float adcValues[20];
-	int avgADCCounterValues[20];
+	static float adcValues[21];
+	int avgADCCounterValues[21];
 	memset(avgADCCounterValues, 0, sizeof(avgADCCounterValues));
 	int adcChannelCounter,avgCounter,adcIndex;
 	int adc1DataRepeat=22;
@@ -2195,7 +1874,7 @@ void startADCRead(void *argument)
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
 	HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
 	HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
-    osDelay(1000);
+    osDelay(600);
   }
   /* USER CODE END startADCRead */
 }
@@ -2219,41 +1898,68 @@ void GetDaScreenBlink(void *argument)
 	 //static uint16_t LCD_Blink_Black = 0b0001000000000000;
 	 int x = 0;
 	 float *adcValues;
-  for(;;)
-  {
-	  	  if(inputButtonSet<5){
-	  		  inputButtonSet=5;
-	  	  }
-	  	  if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
-	  		  adcValues = getADCValues();
-	  		  float *adcValues1 = adcValues+1;
-	  		 // uartTransmitFloat(adcValues,7);
-	  	  }
-	 	  if (!x) {
-	 		  //HAL_GPIO_WritePin(GPIOI,MCU_HEARTBEAT_Pin,GPIO_PIN_SET);
-	 		  x=1;
+	 HAL_StatusTypeDef ret;
+	 initializeDisplay();
+	 uint32_t ulNotifiedValue;
+	 uint8_t button_val = 0;
+	 uint8_t menu_val = 0;
+	 uint8_t running_menu = 0;
+	 uint8_t * readI2c;
+	 uint8_t eepromTest[3];
+	 eepromTest[0]=0x01;
+	 eepromTest[1]=0x01;
+	 eepromTest[2]=0xfa;
 
-	 		  uartTransmitChar("hello\r\n",7);
-	 		  //HAL_GPIO_TogglePin(LCD_SS_GPIO_Port,LCD_SS_Pin);
-	 		  //HAL_SPI_Transmit(&hspi4, (uint16_t *)&LCD_Blink_White, 1, 100);
-	 		  //HAL_SPI_Transmit(&hspi4, (uint8_t *)&LCD_Blink_White1, 1, 100);
-	 		  //HAL_SPI_Transmit(&hspi4, (uint8_t *)&LCD_Blink_White2, 1, 100);
-	 		  //HAL_GPIO_TogglePin(LCD_SS_GPIO_Port,LCD_SS_Pin);
-	 	  }
-	 	  else{
-	 		  //HAL_GPIO_WritePin(GPIOI,MCU_HEARTBEAT_Pin,GPIO_PIN_RESET);
-	 		  x=0;
-	 		  uartTransmitChar("here\r\n",7);
-	 		  //HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_SET);
-	 		  //HAL_SPI_Transmit(&hspi4, (uint8_t *)&LCD_Blink_Black1, 1, 100);
-	 		 //HAL_SPI_Transmit(&hspi4, (uint8_t *)&LCD_Blink_Black2, 1, 100);
-	 		  //HAL_GPIO_WritePin(LCD_SS_GPIO_Port,LCD_SS_Pin,GPIO_PIN_RESET);
-	 	  }
-	 	  //LCD_BlackWhite(x);
-	 	  SMLCD_Clear();
-	 	  LCD_DrawSomeLinesSingleLine();
-	 	  osDelay(400);
-  }
+	   for(;;)
+	   {
+	 	  ulNotifiedValue = 0;
+	 	  xTaskNotifyWait(NOTIFY_NOCLEAR, NOTIFY_CLEARALL, &ulNotifiedValue, portMAX_DELAY);
+	 	  // button press decode
+	 	  button_val = (ulNotifiedValue & NOTIFY_BTN_MASK);
+	 	  menu_val = ((ulNotifiedValue & NOTIFY_MENU_MASK) >> NOTIFY_MENU_BIT);
+	 	  running_menu = ((ulNotifiedValue & NOTIFY_RUN_MENU_MASK) >> NOTIFY_MENU_RUN_BIT);
+	 	  x = writeI2CRegister(0x4c,0x14,eepromTest,1,3);
+//	 	  printf(*readI2c);
+	 //	  printf("uNotifiedValue %d\r\n", ulNotifiedValue);
+	 //	  printf("running_menu: %d\r\n", running_menu);
+	 //	  printf("highlighed menu: %d\n\r", menu_val);
+	 //	  printf("button_press: %d\r\n", button_val);
+
+	 	  // If the BACK button was pressed, just run the SEL button case with the previous menu
+
+		  switch(running_menu)
+		  {
+		  case BOOT_MENU:
+		  {
+			  printf("BOOT_MENU\r\n");
+			  drawBootMenu(menu_val, button_val, running_menu);
+			  //uartTransmitChar("switch BOOT_MENU\r\n",7);
+			  break;
+		  }
+		  case MAIN_MENU:
+		  {
+			  printf("MAIN_MENU\r\n");
+			  drawMainMenu(menu_val);
+			  //uartTransmitChar("switch MAIN_MENU\r\n",7);
+			  break;
+		  }
+		  case STATUS_MENU:
+		  {
+			  printf("STATUS_MENU\r\n");
+			  drawStatusMenu(menu_val);
+			  //uartTransmitChar("switch STATUS_MENU\r\n",7);
+			  break;
+		  }
+		  case SYSTEM_INFO_MENU:
+		  {
+			  printf("SYSTEM INFO MENU\r\n");
+			  //uartTransmitChar("switch SYSTEM INFO_MENU\r\n",7);
+			  drawSystemInfoMenu(menu_val);
+			  break;
+		  }
+		  }
+	 	  osDelay(100);
+	   }
   /* USER CODE END GetDaScreenBlink */
 }
 
@@ -2285,6 +1991,134 @@ void startGpioInputRead(void *argument)
 	  osDelay(950);
   }
   /* USER CODE END startGpioInputRead */
+}
+
+/* USER CODE BEGIN Header_startNavigationTask */
+/**
+* @brief Function implementing the navigationTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startNavigationTask */
+void startNavigationTask(void *argument)
+{
+  /* USER CODE BEGIN startNavigationTask */
+	uint8_t menu_highlight = MENU_TOP;	// variable indicates what menu item is currently being highlighted
+	uint8_t	menu_run = MAIN_MENU;		// variable to track what menu is currently running
+	uint8_t prev_menu = menu_run;		// variable to track what the previous menu running was, this is used for the BACK button
+	uint8_t menu_Max_Items = MAX_MENU_ITEMS_MAIN_MENU;
+	uint8_t prev_menu_highlight = menu_highlight; //variable to track previous menu highlight
+	//uint8_t button_press = 1;
+	// Clear button flags here
+
+  /* Infinite loop */
+  for(;;)
+  {
+	switch(inputButtonSet)
+	{
+	case UP:
+	{
+		if (menu_highlight == MENU_TOP)
+		{
+			//do nothing
+		}
+		else
+		{
+			menu_highlight = menu_highlight - 1;
+			// task notify the display task with UP and current highlighted item
+			// task notification U32 bits defined as:
+			// [0:3]: menu button flags [0]:UP, [1]:DWN, [2]:SEL, [3]:Reserved
+			// [4:7]: menu indicator highlight flags
+			// [8:11]: currently running menu flags
+			xTaskNotify(DatScreenBlinkHandle, (UP | (menu_highlight << NOTIFY_MENU_BIT) | (menu_run << NOTIFY_MENU_RUN_BIT)), eSetValueWithoutOverwrite);
+		}
+		break;
+	}
+	case DWN:
+	{
+		if (menu_highlight >= menu_Max_Items)
+		{
+			//do nothing
+		}
+		else
+		{
+			menu_highlight = menu_highlight + 1;
+			// task notify the display task with DWN and current highlighted item
+			// task notification U32 bits defined as:
+			// [0:3]: menu button flags [0]:UP, [1]:DWN, [2]:SEL, [3]:Reserved
+			// [4:7]: menu selection flags
+			// [8:11]: currently running menu flags
+			// [12:15]: previously running menu flags
+			xTaskNotify(DatScreenBlinkHandle, (DWN | (menu_highlight << NOTIFY_MENU_BIT) | (menu_run << NOTIFY_MENU_RUN_BIT)), eSetValueWithoutOverwrite);
+		}
+		break;
+	}
+	case BACK:
+	{
+		menu_run = prev_menu;
+		menu_highlight = prev_menu_highlight; //set the highlight back to where it was for the previous menu.
+		// task notify the display task with SEL and what menu to run
+		// task notification U32 bits defined as:
+		// [0:3]: menu button flags [0]:UP, [1]:DWN, [2]:SEL, [3]:Reserved
+		// [4:7]: menu selection flags
+		// [8:11]: currently running menu flags
+		// [12:15]: previously running menu flags
+		xTaskNotify(DatScreenBlinkHandle, (BACK | (menu_highlight << NOTIFY_MENU_BIT) | (menu_run << NOTIFY_MENU_RUN_BIT)), eSetValueWithoutOverwrite);
+		break;
+	}
+	case SEL:
+	{
+		if(menu_run==MAIN_MENU){
+			prev_menu = menu_run;		// save currently running menu for BACK button
+			menu_run = menu_highlight+1;	// update the currently running menu to what the user SELECTED. Requires +1 to match with menu values
+			prev_menu_highlight = menu_highlight; //keep track of the previous menu's highlight for when back is pressed
+			menu_highlight=MENU_TOP; //reset the menu highlight for the next menu
+		}
+//			printf("menu_run: %d\r\n", menu_run);
+//			printf("prev_menu: %d\r\n", prev_menu);
+//			printf("menu_run_adjust: %d\r\n", (menu_run << NOTIFY_MENU_RUN_BIT));
+		// task notify the display task with SEL and what menu to run
+		// task notification U32 bits defined as:
+		// [0:3]: menu button flags [0]:UP, [1]:DWN, [2]:SEL, [3]:Reserved
+		// [4:7]: menu selection flags
+		// [8:11]: currently running menu flags
+		// [12:15]: previously running menu flags
+		xTaskNotify(DatScreenBlinkHandle, (SEL | (menu_highlight << NOTIFY_MENU_BIT) | (menu_run << NOTIFY_MENU_RUN_BIT)), eSetValueWithoutOverwrite);
+		break;
+	}
+	default:
+		// task notify the display task with no button press.  Just refresh the current running menu.
+		xTaskNotify(DatScreenBlinkHandle, (NO_BTN_PRESS | (menu_highlight << NOTIFY_MENU_BIT) | (menu_run << NOTIFY_MENU_RUN_BIT)), eSetValueWithoutOverwrite);
+		break;
+	}
+	//initialize the max indicator for each menu
+	switch(menu_run){
+
+	case BOOT_MENU:{
+		menu_Max_Items = MAX_MENU_ITEMS_BOOT_MENU;
+		break;
+	}
+	case MAIN_MENU:{
+		menu_Max_Items = MAX_MENU_ITEMS_MAIN_MENU;
+		break;
+	}
+	case STATUS_MENU:{
+		menu_Max_Items = MAX_MENU_ITEMS_STATUS_MENU;
+		break;
+	}
+	case SYSTEM_INFO_MENU:{
+		menu_Max_Items = MAX_MENU_ITEMS_SYSTEM_INFO_MENU;
+		break;
+	}
+	default:
+		menu_Max_Items = MAX_MENU_ITEMS_BOOT_MENU;
+		break;
+	}
+	inputButtonSet = NO_BTN_PRESS;
+    osDelay(200);
+  }
+
+  /* USER CODE END startNavigationTask */
 }
 
  /**

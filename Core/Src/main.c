@@ -1731,56 +1731,80 @@ void setErrorLED(int led,_Bool change){
 
 
 float* getADCValues(){
+	//intialize a static float array to return from the method. Make static to avoid the data changing on return
 	static float adcValues[21];
+	//make an integer array to store the adc counts. ADC counts are out of 4096
 	int avgADCCounterValues[21];
+	//empty the integer array
 	memset(avgADCCounterValues, 0, sizeof(avgADCCounterValues));
 	int adcChannelCounter,avgCounter,adcIndex;
+	//variables to denote what interval the data in the adc buffers repeats. ADC format is [data0, 0x00, data1, 0x00...]
+	//the interval is (#ofchannels activated on bank) * 2
 	int adc1DataRepeat=22;
 	int adc2DataRepeat=8;
 	int adc3DataRepeat=12;
-	for(adcChannelCounter=0;adcChannelCounter<20;adcChannelCounter++){
+	//iterate through all 21 adc channels...
+	for(adcChannelCounter=0;adcChannelCounter<21;adcChannelCounter++){
+		//for the first channels of the adc banks (ADC Bank 1's first channel is ADC3, ADC bank 2's first channel is ADC0, ADC bank 3's first channel is adc2
 		if((adcChannelCounter==Adc.adc0) || (adcChannelCounter==Adc.adc2) || (adcChannelCounter==Adc.adc3)){
+			//first data entry for each buffer will be the data for these adcs
 			adcIndex=0;
 		}
+		//for the second channels of the adc banks (ADC Bank 1's second channel is ADC4, ADC bank 2's second channel is ADC1, ADC bank 3's second channel is adc14
 		else if((adcChannelCounter==Adc.adc1) || (adcChannelCounter==Adc.adc14) || (adcChannelCounter==Adc.adc4)){
 			adcIndex=2;
 		}
+		//for the third channels of the adc banks (ADC Bank 1's third channel is ADC5, ADC bank 2's third channel is spareSpiADC, ADC bank 3's third channel is adc15
 		else if((adcChannelCounter==Adc.spareSpiADC) || (adcChannelCounter==Adc.adc15) || (adcChannelCounter==Adc.adc5)){
 			adcIndex=4;
 		}
+		//for the fourth channels of the adc banks (ADC Bank 1's fourth channel is adc6, ADC bank 2's fourth channel is spareUARTADC, ADC bank 3's fourth channel is configADC
 		else if((adcChannelCounter == Adc.spareUartADC) || (adcChannelCounter==Adc.configADC) || (adcChannelCounter==Adc.adc6)){
 			adcIndex=6;
 		}
+		//for the fifth channels of the adc banks (ADC Bank 1's fifth channel is ADC7, ADC bank 3's fifth channel is zionADC
 		else if((adcChannelCounter==Adc.zionADC) || (adcChannelCounter==Adc.adc7)){
 			adcIndex=8;
 		}
+		//for the sixth channels of the adc banks (ADC Bank 1's sixth channel is ADC8, ADC bank 3's sixth channel is spareI2cADC
 		else if((adcChannelCounter == Adc.spareI2cADC) || (adcChannelCounter==Adc.adc8)){
 			adcIndex=10;
 		}
+		//for the seventh channels of the adc banks (ADC Bank 1's seventh channel is ADC9)
 		else if(adcChannelCounter==Adc.adc9){
 			adcIndex=12;
 		}
+		//for the eighth channels of the adc banks (ADC Bank 1's eighth channel is ADC10)
 		else if(adcChannelCounter==Adc.adc10){
 			adcIndex=14;
 		}
+		//for the nineth channels of the adc banks (ADC Bank 1's nineth channel is ADC11)
 		else if(adcChannelCounter==Adc.adc11){
 			adcIndex=16;
 		}
+		//for the tenth channels of the adc banks (ADC Bank 1's tenth channel is ADC12)
 		else if(adcChannelCounter==Adc.adc12){
 			adcIndex=18;
 		}
+		//for the eleventh channels of the adc banks (ADC Bank 1's eleventh channel is ADC13)
 		else{
 			adcIndex=20;
 		}
+		//for the channels that belong to the second ADC bank
 		if((adcChannelCounter == Adc.adc0) || (adcChannelCounter == Adc.adc1) || (adcChannelCounter == Adc.spareSpiADC) || (adcChannelCounter == Adc.spareUartADC)){
+			//parse through the buffers to grab enough values to make the asked for average amount
 			for(avgCounter=0;avgCounter<ADC_AVG_COUNT;avgCounter++){
+				//adjust the index to match the next data point in the buffer
 				int shiftedIndex = adcIndex + (adc2DataRepeat*avgCounter);
+				//add it to the rolling average count
 				avgADCCounterValues[adcChannelCounter]+=adc2_buf[shiftedIndex];
 				if (avgCounter == (ADC_AVG_COUNT-1)){
+					//at the end, divide the total amount to get our averaged Value
 					avgADCCounterValues[adcChannelCounter] = avgADCCounterValues[adcChannelCounter]/ADC_AVG_COUNT;
 				}
 			}
 		}
+		//for the channels that belong to the third ADC bank
 		else if((adcChannelCounter == Adc.adc2) || (adcChannelCounter == Adc.adc14) || (adcChannelCounter == Adc.adc15) || (adcChannelCounter == Adc.configADC) || (adcChannelCounter == Adc.zionADC) || (adcChannelCounter == Adc.spareI2cADC)){
 			for(avgCounter=0;avgCounter<ADC_AVG_COUNT;avgCounter++){
 				int shiftedIndex = adcIndex + (adc3DataRepeat*avgCounter);
@@ -1790,6 +1814,7 @@ float* getADCValues(){
 				}
 			}
 		}
+		//for the channels that belong to the first ADC bank
 		else{
 			for(avgCounter=0;avgCounter<ADC_AVG_COUNT;avgCounter++){
 				int shiftedIndex = adcIndex + (adc1DataRepeat*avgCounter);
@@ -1800,6 +1825,7 @@ float* getADCValues(){
 			}
 		}
 	}
+	//for adc inputs with names ADC#, true value is found by taking the average, multiplying it by the divisor(3.3/4096), and then multiplying by the resistor divider (3)
 	adcValues[Adc.adc0] = (avgADCCounterValues[Adc.adc0] * Adc.adcDivisor) * Adc.adcResistorDivider;
 	adcValues[Adc.adc1] = (avgADCCounterValues[Adc.adc1] * Adc.adcDivisor) * Adc.adcResistorDivider;
 	adcValues[Adc.adc2] = (avgADCCounterValues[Adc.adc2] * Adc.adcDivisor) * Adc.adcResistorDivider;
@@ -1816,6 +1842,7 @@ float* getADCValues(){
 	adcValues[Adc.adc13] = (avgADCCounterValues[Adc.adc13] * Adc.adcDivisor) * Adc.adcResistorDivider;
 	adcValues[Adc.adc14] = (avgADCCounterValues[Adc.adc14] * Adc.adcDivisor) * Adc.adcResistorDivider;
 	adcValues[Adc.adc15] = (avgADCCounterValues[Adc.adc15] * Adc.adcDivisor) * Adc.adcResistorDivider;
+	//for other adc input, true value is found by taking the average, multiplying it by the divisor(3.3/4096), and then multiplying by the resistor divider (2)
 	adcValues[Adc.spareSpiADC] = (avgADCCounterValues[Adc.spareSpiADC] * Adc.adcDivisor) * Adc.systemResistorDivider;
 	adcValues[Adc.spareUartADC] = (avgADCCounterValues[Adc.spareUartADC] * Adc.adcDivisor) * Adc.systemResistorDivider;
 	adcValues[Adc.configADC] = (avgADCCounterValues[Adc.configADC] * Adc.adcDivisor) * Adc.systemResistorDivider;

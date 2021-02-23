@@ -8153,8 +8153,11 @@ float* getADCValues(){
  80034e0:	b580      	push	{r7, lr}
  80034e2:	b09e      	sub	sp, #120	; 0x78
  80034e4:	af00      	add	r7, sp, #0
+	//intialize a static float array to return from the method. Make static to avoid the data changing on return
 	static float adcValues[21];
+	//make an integer array to store the adc counts. ADC counts are out of 4096
 	int avgADCCounterValues[21];
+	//empty the integer array
 	memset(avgADCCounterValues, 0, sizeof(avgADCCounterValues));
  80034e6:	463b      	mov	r3, r7
  80034e8:	2254      	movs	r2, #84	; 0x54
@@ -8162,6 +8165,8 @@ float* getADCValues(){
  80034ec:	4618      	mov	r0, r3
  80034ee:	f00c fe8a 	bl	8010206 <memset>
 	int adcChannelCounter,avgCounter,adcIndex;
+	//variables to denote what interval the data in the adc buffers repeats. ADC format is [data0, 0x00, data1, 0x00...]
+	//the interval is (#ofchannels activated on bank) * 2
 	int adc1DataRepeat=22;
  80034f2:	2316      	movs	r3, #22
  80034f4:	66bb      	str	r3, [r7, #104]	; 0x68
@@ -8171,7 +8176,7 @@ float* getADCValues(){
 	int adc3DataRepeat=12;
  80034fa:	230c      	movs	r3, #12
  80034fc:	663b      	str	r3, [r7, #96]	; 0x60
-	for(adcChannelCounter=0;adcChannelCounter<20;adcChannelCounter++){
+	for(adcChannelCounter=0;adcChannelCounter<21;adcChannelCounter++){
  80034fe:	2300      	movs	r3, #0
  8003500:	677b      	str	r3, [r7, #116]	; 0x74
  8003502:	e171      	b.n	80037e8 <getADCValues+0x308>
@@ -8567,12 +8572,12 @@ float* getADCValues(){
  80037dc:	6f3b      	ldr	r3, [r7, #112]	; 0x70
  80037de:	2b13      	cmp	r3, #19
  80037e0:	ddc8      	ble.n	8003774 <getADCValues+0x294>
-	for(adcChannelCounter=0;adcChannelCounter<20;adcChannelCounter++){
+	for(adcChannelCounter=0;adcChannelCounter<21;adcChannelCounter++){
  80037e2:	6f7b      	ldr	r3, [r7, #116]	; 0x74
  80037e4:	3301      	adds	r3, #1
  80037e6:	677b      	str	r3, [r7, #116]	; 0x74
  80037e8:	6f7b      	ldr	r3, [r7, #116]	; 0x74
- 80037ea:	2b13      	cmp	r3, #19
+ 80037ea:	2b14      	cmp	r3, #20
  80037ec:	f77f ae8a 	ble.w	8003504 <getADCValues+0x24>
 				}
 			}

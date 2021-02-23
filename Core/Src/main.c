@@ -164,6 +164,7 @@ void uartTransmitFloat(float *number, int uart);
 uint8_t *getInputGPIOState(void);
 void setOutputGPIOState(int gpio, int state);
 void outputGPIOBufInitialization();
+void setVoltageMux(int comChannel, int voltageChannel, int clear);
 //void LCD_DrawSomeLinesSingleLine();
 //void LCD_DrawSomeLinesBatchLine();
 //void LCD_BlackWhite(int color);
@@ -795,8 +796,8 @@ static void MX_I2C3_Init(void)
 
   /* USER CODE END I2C3_Init 1 */
   hi2c3.Instance = I2C3;
-  hi2c3.Init.Timing = 0x10303DEA;
-  hi2c3.Init.OwnAddress1 = 0;
+  hi2c3.Init.Timing = 0x100029FE;
+  hi2c3.Init.OwnAddress1 = 152;
   hi2c3.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c3.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
   hi2c3.Init.OwnAddress2 = 0;
@@ -819,6 +820,9 @@ static void MX_I2C3_Init(void)
   {
     Error_Handler();
   }
+  /** I2C Enable Fast Mode Plus
+  */
+  HAL_I2CEx_EnableFastModePlus(I2C_FASTMODEPLUS_I2C3);
   /* USER CODE BEGIN I2C3_Init 2 */
 
   /* USER CODE END I2C3_Init 2 */
@@ -1842,13 +1846,33 @@ float* getADCValues(){
 	adcValues[Adc.adc13] = (avgADCCounterValues[Adc.adc13] * Adc.adcDivisor) * Adc.adcResistorDivider;
 	adcValues[Adc.adc14] = (avgADCCounterValues[Adc.adc14] * Adc.adcDivisor) * Adc.adcResistorDivider;
 	adcValues[Adc.adc15] = (avgADCCounterValues[Adc.adc15] * Adc.adcDivisor) * Adc.adcResistorDivider;
-	//for other adc input, true value is found by taking the average, multiplying it by the divisor(3.3/4096), and then multiplying by the resistor divider (2)
+	//for other adc inputs, true value is found by taking the average, multiplying it by the divisor(3.3/4096), and then multiplying by the resistor divider (2)
 	adcValues[Adc.spareSpiADC] = (avgADCCounterValues[Adc.spareSpiADC] * Adc.adcDivisor) * Adc.systemResistorDivider;
 	adcValues[Adc.spareUartADC] = (avgADCCounterValues[Adc.spareUartADC] * Adc.adcDivisor) * Adc.systemResistorDivider;
 	adcValues[Adc.configADC] = (avgADCCounterValues[Adc.configADC] * Adc.adcDivisor) * Adc.systemResistorDivider;
 	adcValues[Adc.zionADC] = (avgADCCounterValues[Adc.zionADC] * Adc.adcDivisor) * Adc.systemResistorDivider;
 	adcValues[Adc.spareI2cADC] = (avgADCCounterValues[Adc.spareI2cADC] * Adc.adcDivisor) * Adc.systemResistorDivider;
 	return adcValues;
+}
+
+void setVoltageMux(int comChannel, int voltageChannel, int clear){
+	uint8_t dataWriteCOMA[1];
+	uint8_t dataWriteCOMB[1];
+	int x;
+	if((comChannel) & (!clear)){
+		dataWriteCOMA[0] = socI2cVoltageMux.clearSwitches;
+		dataWriteCOMB[0]= voltageChannel;
+	}
+	else if((!comChannel) & (!clear)){
+		dataWriteCOMA[0] = voltageChannel;
+		dataWriteCOMB[0]= socI2cVoltageMux.clearSwitches;
+	}
+	else{
+		dataWriteCOMA[0] = socI2cVoltageMux.clearSwitches;
+		dataWriteCOMB[0]= socI2cVoltageMux.clearSwitches;
+	}
+	x = writeI2CRegister(socI2cVoltageMux.address, socI2cVoltageMux.CMD_A_reg, dataWriteCOMA,sizeof(dataWriteCOMA), socI2cVoltageMux.i2cBank);
+	x = writeI2CRegister(socI2cVoltageMux.address, socI2cVoltageMux.CMD_B_reg, dataWriteCOMB,sizeof(dataWriteCOMB), socI2cVoltageMux.i2cBank);
 }
 //// Called when first half of buffer is filled
 //void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
@@ -1931,10 +1955,10 @@ void GetDaScreenBlink(void *argument)
 	 uint8_t button_val = 0;
 	 uint8_t menu_val = 0;
 	 uint8_t running_menu = 0;
-	 uint8_t * readI2c;
+	 uint8_t readI2c[3];
 	 uint8_t eepromTest[3];
 	 eepromTest[0]=0x01;
-	 eepromTest[1]=0x01;
+	 eepromTest[1]=0xfa;
 	 eepromTest[2]=0xfa;
 
 	   for(;;)
@@ -1945,7 +1969,11 @@ void GetDaScreenBlink(void *argument)
 	 	  button_val = (ulNotifiedValue & NOTIFY_BTN_MASK);
 	 	  menu_val = ((ulNotifiedValue & NOTIFY_MENU_MASK) >> NOTIFY_MENU_BIT);
 	 	  running_menu = ((ulNotifiedValue & NOTIFY_RUN_MENU_MASK) >> NOTIFY_MENU_RUN_BIT);
-	 	  x = writeI2CRegister(0x4c,0x14,eepromTest,1,3);
+	 	  setVoltageMux(COMA,socI2cVoltageMux.enableSW2,0);
+	 	  HAL_I2C_Mem_Write(&hi2c4,(0x53 << 1),0x0001, I2C_MEMADD_SIZE_16BIT,eepromTest,3,100);
+	 	  HAL_Delay(10);
+	 	  HAL_I2C_Mem_Read(&hi2c4,(0x53 << 1),0x0001, I2C_MEMADD_SIZE_16BIT,readI2c,3,100);
+	 	  printf(readI2c[0]);
 //	 	  printf(*readI2c);
 	 //	  printf("uNotifiedValue %d\r\n", ulNotifiedValue);
 	 //	  printf("running_menu: %d\r\n", running_menu);

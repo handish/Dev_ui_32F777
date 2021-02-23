@@ -292,6 +292,9 @@ void Error_Handler(void);
 
 #define NO_BTN_PRESS		5
 
+#define COMA				0
+#define COMB				1
+
 struct LED{
 	uint8_t address;
 	uint8_t mode0_reg;
@@ -308,6 +311,31 @@ struct LED{
 	int i2cBank;
 };
 static struct LED LED = {0x60 << 1, 0x00, 0x14, 0x15, 0x16, 0x17, 0x1C,0x11,0x09,0x0A,0x0B, 0x08,1};
+
+struct socI2cVoltageMux{
+	uint8_t address;
+	uint8_t CMD_A_reg;
+	uint8_t CMD_B_reg;
+	uint8_t enableSW1;
+	uint8_t enableSW2;
+	uint8_t enableSW3;
+	uint8_t enableSW4;
+	uint8_t enableSW5;
+	uint8_t enableSW6;
+	uint8_t enableSW7;
+	uint8_t enableSW8;
+	uint8_t enableSW9;
+	uint8_t enableSW10;
+	uint8_t enableSW11;
+	uint8_t enableSW12;
+	uint8_t enableSW13;
+	uint8_t enableSW14;
+	uint8_t enableSW15;
+	uint8_t enableSW16;
+	uint8_t clearSwitches;
+	int i2cBank;
+};
+static struct socI2cVoltageMux socI2cVoltageMux = {0x4C << 1, 0x14 , 0x15, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F ,0x10, 3};
 
 struct inputGPIOs{
 	int input0;

@@ -451,6 +451,18 @@ void drawStatusMenu(int indicator){
 
 		i=40;
 		j+=25;
+		i+= LCD_PutStr(i, j, "SOC I2C: ", fnt7x10);
+		i2cCheck=writeI2CRegister(socI2cVoltageMux.address, 0xf0, 0x00,1,socI2cVoltageMux.i2cBank);
+		if(i2cCheck){
+			LCD_PutStr(i, j, "Present", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Undetected", fnt7x10);
+		}
+
+
+		i=40;
+		j+=25;
 		i+= LCD_PutStr(i, j, "Dev UI Runtime: ", fnt7x10);
 		//GetTick provides runtime in milliseconds
 		int runtime = (HAL_GetTick()/1000);
@@ -605,6 +617,8 @@ void drawSystemInfoMenu(int indicator){
 		i+=LCD_PutIntF(i, j, convertedFloat, 1, fnt7x10) + adjacentSpacing;
 		i+=LCD_PutStr(i, j, "Zion Switch: ", fnt7x10);
 		LCD_PutStr(i, j, "INACTIVE", fnt7x10);
+
+
 
 		i=200;
 		j=15;

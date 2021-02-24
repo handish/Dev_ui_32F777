@@ -22,7 +22,7 @@ extern "C" {
 
 extern uint8_t adcRestart[3];
 extern uint8_t gpioInputBuf[12];
-int previousMenu = 0;
+
 
 void initializeDisplay();
 void drawMainMenu(int indicator);

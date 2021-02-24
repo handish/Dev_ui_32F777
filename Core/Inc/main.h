@@ -34,6 +34,8 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 // External peripherals
 #include "ls027b7dh01.h"
+#include "menu.h"
+#include "zionEeprom.h"
 
 // Graphical resources
 #include "font5x7.h"

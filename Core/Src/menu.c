@@ -6,7 +6,7 @@
  */
 #include "menu.h"
 
-
+int previousMenu = 0;
 float displayAdcValues[21];
 
 void initializeDisplay(){

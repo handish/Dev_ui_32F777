@@ -1874,6 +1874,8 @@ void setVoltageMux(int comChannel, int voltageChannel, int clear){
 	x = writeI2CRegister(socI2cVoltageMux.address, socI2cVoltageMux.CMD_A_reg, dataWriteCOMA,sizeof(dataWriteCOMA), socI2cVoltageMux.i2cBank);
 	x = writeI2CRegister(socI2cVoltageMux.address, socI2cVoltageMux.CMD_B_reg, dataWriteCOMB,sizeof(dataWriteCOMB), socI2cVoltageMux.i2cBank);
 }
+
+
 //// Called when first half of buffer is filled
 //void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
 //}
@@ -1941,12 +1943,6 @@ void GetDaScreenBlink(void *argument)
 {
   /* USER CODE BEGIN GetDaScreenBlink */
   /* Infinite loop */
-	 static uint8_t LCD_Blink_White1 = 0b00011000;
-	 static uint8_t LCD_Blink_White2 = 0b00000000;
-	 static uint8_t LCD_Blink_Black1 = 0b00010000;
-	 static uint8_t LCD_Blink_Black2 = 0b00000000;
-	 //static uint16_t LCD_Blink_White = 0b0001100000000000;
-	 //static uint16_t LCD_Blink_Black = 0b0001000000000000;
 	 int x = 0;
 	 float *adcValues;
 	 HAL_StatusTypeDef ret;
@@ -1955,12 +1951,7 @@ void GetDaScreenBlink(void *argument)
 	 uint8_t button_val = 0;
 	 uint8_t menu_val = 0;
 	 uint8_t running_menu = 0;
-	 uint8_t readI2c[3];
-	 uint8_t eepromTest[3];
-	 eepromTest[0]=0x01;
-	 eepromTest[1]=0xfa;
-	 eepromTest[2]=0xfa;
-
+	 uint8_t readI2c[2250];
 	   for(;;)
 	   {
 	 	  ulNotifiedValue = 0;
@@ -1970,10 +1961,18 @@ void GetDaScreenBlink(void *argument)
 	 	  menu_val = ((ulNotifiedValue & NOTIFY_MENU_MASK) >> NOTIFY_MENU_BIT);
 	 	  running_menu = ((ulNotifiedValue & NOTIFY_RUN_MENU_MASK) >> NOTIFY_MENU_RUN_BIT);
 	 	  setVoltageMux(COMA,socI2cVoltageMux.enableSW2,0);
-	 	  HAL_I2C_Mem_Write(&hi2c4,(0x53 << 1),0x0001, I2C_MEMADD_SIZE_16BIT,eepromTest,3,100);
-	 	  HAL_Delay(10);
-	 	  HAL_I2C_Mem_Read(&hi2c4,(0x53 << 1),0x0001, I2C_MEMADD_SIZE_16BIT,readI2c,3,100);
-	 	  printf(readI2c[0]);
+//	 	  writeZionBinaries();
+	 	  //clearEEPROM(SOC_ADDRESS);
+	 	  //clearEEPROM(ASIC_ADDRESS);
+	 	  //clearEEPROM(DISPLAY_ADDRESS);
+//	 	  readDataFromEEPROM((uint8_t*)readI2c,SOC_ADDRESS,0x0,sizeof(readI2c), 500);
+//	 	  printf(readI2c[0]);
+//	 	  readDataFromEEPROM((uint8_t*)readI2c,ASIC_ADDRESS,0x0,sizeof(readI2c), 500);
+//	 	  printf(readI2c[0]);
+//	 	  readDataFromEEPROM((uint8_t*)readI2c,DISPLAY_ADDRESS,0x0,sizeof(readI2c), 500);
+//	 	  printf(readI2c[0]);
+
+	 	  //binaryToArray(readBinary,"Kanu");
 //	 	  printf(*readI2c);
 	 //	  printf("uNotifiedValue %d\r\n", ulNotifiedValue);
 	 //	  printf("running_menu: %d\r\n", running_menu);

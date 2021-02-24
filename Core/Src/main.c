@@ -1951,7 +1951,7 @@ void GetDaScreenBlink(void *argument)
 	 uint8_t button_val = 0;
 	 uint8_t menu_val = 0;
 	 uint8_t running_menu = 0;
-	 uint8_t readI2c[2250];
+	 int *readI2c;
 	   for(;;)
 	   {
 	 	  ulNotifiedValue = 0;
@@ -1962,6 +1962,11 @@ void GetDaScreenBlink(void *argument)
 	 	  running_menu = ((ulNotifiedValue & NOTIFY_RUN_MENU_MASK) >> NOTIFY_MENU_RUN_BIT);
 	 	  setVoltageMux(COMA,socI2cVoltageMux.enableSW2,0);
 //	 	  writeZionBinaries();
+	 	  //readI2c = parseZionEEPROM(SOC_ADDRESS);
+	 	  //int blah = *(readI2c+5);
+	 	  //clearEEPROM(SOC_ADDRESS);
+	 	  //readI2c = parseZionEEPROM(SOC_ADDRESS);
+	 	  //blah = *(readI2c+5);
 	 	  //clearEEPROM(SOC_ADDRESS);
 	 	  //clearEEPROM(ASIC_ADDRESS);
 	 	  //clearEEPROM(DISPLAY_ADDRESS);

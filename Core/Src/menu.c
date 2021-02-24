@@ -452,7 +452,7 @@ void drawStatusMenu(int indicator){
 		i=40;
 		j+=25;
 		i+= LCD_PutStr(i, j, "SOC I2C: ", fnt7x10);
-		i2cCheck=writeI2CRegister(socI2cVoltageMux.address, 0xf0, 0x00,1,socI2cVoltageMux.i2cBank);
+		i2cCheck=writeI2CRegister(socI2cVoltageMux.address, 0x11, 0x00,1,socI2cVoltageMux.i2cBank);
 		if(i2cCheck){
 			LCD_PutStr(i, j, "Present", fnt7x10);
 		}

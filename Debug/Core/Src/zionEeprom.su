@@ -1,5 +1,6 @@
 zionEeprom.c:10:7:zionEEPROMPresence	8	static
 zionEeprom.c:25:6:writeDataToEEPROM	56	static
-zionEeprom.c:38:6:readDataFromEEPROM	40	static
-zionEeprom.c:41:6:clearEEPROM	72	static
-zionEeprom.c:52:6:writeZionBinaries	24	static
+zionEeprom.c:39:6:readDataFromEEPROM	40	static
+zionEeprom.c:42:6:clearEEPROM	72	static
+zionEeprom.c:53:6:writeZionBinaries	24	static
+zionEeprom.c:71:7:parseZionEEPROM	280	static

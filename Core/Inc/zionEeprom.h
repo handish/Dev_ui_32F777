@@ -27,6 +27,7 @@ void writeDataToEEPROM(uint8_t * data, uint8_t chipAddress, uint16_t memoryAddre
 void readDataFromEEPROM(uint8_t * data, uint8_t chipAddress, uint16_t memoryAddress, int len, uint16_t timeout);
 void clearEEPROM(uint8_t chipAddress);
 void writeZionBinaries();
+int * parseZionEEPROM(uint8_t chipAddress);
 
 #if 1
 static uint8_t zionEEPROMTrident[2220] = {

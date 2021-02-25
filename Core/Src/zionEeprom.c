@@ -55,7 +55,7 @@ void writeZionBinaries(){
 	  zionEEPROM = zionEEPROMPresence();
 	  if(*zionEEPROM){ // only do the actions if the SOC EEPROM is detected
 	 	  clearEEPROM(SOC_ADDRESS);
-		  writeDataToEEPROM((uint8_t*)zionEEPROMTrident,SOC_ADDRESS,0x0,sizeof(zionEEPROMTrident), 100);
+		  writeDataToEEPROM((uint8_t*)zionEEPROMCarabao,SOC_ADDRESS,0x0,sizeof(zionEEPROMCarabao), 100);
 	  }
 	  if(*(zionEEPROM+1)){ // only do the actions if the ASIC EEPROM is detected
 	 	  clearEEPROM(ASIC_ADDRESS);
@@ -71,82 +71,124 @@ void writeZionBinaries(){
 int * parseZionEEPROM(uint8_t chipAddress){
 	int foundTheEnd = 0;
 	int x=0;
-	int zeroWasFF=0;
-	int outOfSyncFF=0;
-	int previousByteOfFF[6];
+	int size = 100;
+	int counter=6;
+	int zeroWas5A=0;
+	int validHeader=0;
+	int previousByteOfHeader[20];
 	int index=0;
 	int indexSubtractor = 0;
-	uint8_t letsParseSomeBytes[100];
-	uint8_t pastParsedBytes[100];
-	static int deviceHeaderBytes[6];
+	uint8_t letsParseSomeBytes[size];
+	uint8_t pastParsedBytes[size];
+	static int deviceHeaderBytes[5];
 
-	memset(previousByteOfFF,0,sizeof(previousByteOfFF));
+	memset(previousByteOfHeader,0,sizeof(previousByteOfHeader));
 	memset(pastParsedBytes,0,sizeof(pastParsedBytes));
 	memset(letsParseSomeBytes,0,sizeof(letsParseSomeBytes));
 	readDataFromEEPROM((uint8_t*)letsParseSomeBytes,chipAddress,0x00,sizeof(letsParseSomeBytes),100);
+	//if the eeprom is uninitialized and/or improperly formated, just end.
+	if(letsParseSomeBytes[0] == 0xff){
+		foundTheEnd=1;
+		previousByteOfHeader[0]=index;
+	}
 	while(!foundTheEnd){
-		if(!(index%100) & (index>0)){
-			for(x=0;x<100;x++){
+		//if the eeprom is uninitialized and/or improperly formated, just end.
+		//every time we reach the end of our data, store it in the past buffer and get more!
+		if(!(index%size) & (index>0)){
+			for(x=0;x<size;x++){
 				pastParsedBytes[x] = letsParseSomeBytes[x];
 			}
 			readDataFromEEPROM((uint8_t*)letsParseSomeBytes,chipAddress,index,sizeof(letsParseSomeBytes),100);
-			indexSubtractor+=100;
+			indexSubtractor+=size;
+		}
+		//if 5 consecutive bits in a read operation are 0xff, time to give up finding the legit header
+		if((letsParseSomeBytes[0] == 0xff) && (letsParseSomeBytes[1] == 0xff) && (letsParseSomeBytes[2] == 0xff) && (letsParseSomeBytes[3] == 0xff) && (letsParseSomeBytes[5] == 0xff)){
+			previousByteOfHeader[0]=-1;
+			foundTheEnd=1;
 		}
 		//if((letsParseSomeBytes[index] == 0xff)){
-		if((letsParseSomeBytes[index-indexSubtractor] == 0xff)){
-			if((previousByteOfFF[0] == 0) & (!zeroWasFF)){
-				previousByteOfFF[0] = index;
+		if(((letsParseSomeBytes[index-indexSubtractor] == 0x5a))|| ((letsParseSomeBytes[previousByteOfHeader[0]%size] == 0x5a) && (index < previousByteOfHeader[0]+20)) || ((pastParsedBytes[previousByteOfHeader[0]%size] == 0x5a) && (index < previousByteOfHeader[0]+20))){
+			if((previousByteOfHeader[0] == 0) & (!zeroWas5A) & ((letsParseSomeBytes[index-indexSubtractor] == 0x5a))){
+				previousByteOfHeader[0] = index;
 				if(index==0){
-					zeroWasFF=1;
+					zeroWas5A=1;
 				}
 			}
+			//if validHeader was set, we just need the next 14 bytes of data
+			else if(validHeader){
+				previousByteOfHeader[counter]=index;
+				if(counter==19){
+					foundTheEnd=1;
+				}
+				counter++;
+			}
 			else{
-				for(x=0; x<5; x++){
-					if(previousByteOfFF[x] == index-1){
-						previousByteOfFF[x+1] = index;
-						if((x+1)==5){
-							foundTheEnd=1;
-						}
-						outOfSyncFF=0;
-						break;
-					}
-					else{
-						outOfSyncFF=1;
-					}
+				if((letsParseSomeBytes[index-indexSubtractor] == 0x45)){
+					previousByteOfHeader[1] = index;
 				}
-				if(outOfSyncFF){
-					memset(previousByteOfFF,0,sizeof(previousByteOfFF));
-					zeroWasFF=0;
-					previousByteOfFF[0] = index;
-					outOfSyncFF=0;
+				else if (((letsParseSomeBytes[index-indexSubtractor] == 0x46)) && (previousByteOfHeader[1] == index -1)){
+					previousByteOfHeader[2] = index;
 				}
+				else if (((letsParseSomeBytes[index-indexSubtractor] == 0x01)) && (previousByteOfHeader[2] == index -1)){
+					previousByteOfHeader[3] = index;
+				}
+				else if (((letsParseSomeBytes[index-indexSubtractor] == 0x01)) && (previousByteOfHeader[3] == index -1)){
+					previousByteOfHeader[4] = index;
+				}
+				else if (((letsParseSomeBytes[index-indexSubtractor] == 0x04)) && (previousByteOfHeader[4] == index -1)){
+					previousByteOfHeader[5] = index;
+					validHeader=1;
+				}
+				//if things didn't look good, erase it!
+				else if (!validHeader){
+					memset(previousByteOfHeader,0,sizeof(previousByteOfHeader));
+					zeroWas5A=0;
+				}
+
 			}
 		}
 		index++;
 	}
-	int counter=0;
-	if(previousByteOfFF[0]>6){
-		int remainder = previousByteOfFF[0]%100;
-		if(remainder >4){
-			for(x=0;x<5;x++){
+	//if the eemprom is initialized
+	if(previousByteOfHeader[0]>6){
+		//figure out on which index our data started
+		int remainder = previousByteOfHeader[16]%size;
+		//if some of our data is split between past read and present read
+		if(remainder >((size-1)-4)){
+			//amount of bytes in the previous read
+			int bytesInPreviousRead = (size-1) - remainder;
+			//grab those bytes and store them in the buffer
+			for(x=0;x<bytesInPreviousRead;x++){
 				//deviceHeaderBytes[x] = letsParseSomeBytes[previousByteOfFF[0]-5+x];
-				deviceHeaderBytes[x] = letsParseSomeBytes[remainder-5+x];
+				deviceHeaderBytes[x] = pastParsedBytes[previousByteOfHeader[16+x]%size];
+			}
+			//grab the remaining bytes from the present buffer
+			for(x=bytesInPreviousRead;x<4;x++){
+				deviceHeaderBytes[x] = letsParseSomeBytes[previousByteOfHeader[16+x]%size];
 			}
 		}
 		else{
-			for(x=100 -5 +remainder;x<100;x++){
-				deviceHeaderBytes[counter] = pastParsedBytes[x];
-				counter++;
-			}
-			for(x=0;x<remainder;x++){
-				deviceHeaderBytes[counter] = letsParseSomeBytes[x];
-				counter++;
+			//easy! all bytes are in the recent array. Grab them and store them.
+			for(x=0;x<4;x++){
+				deviceHeaderBytes[x] = letsParseSomeBytes[previousByteOfHeader[16+x]%size];
 			}
 		}
 	}
 	else{
-		memset(deviceHeaderBytes,0xff,sizeof(deviceHeaderBytes));
+		//send invalid data
+		if(previousByteOfHeader[0] == -1){
+			//if eeprom is initialized but no device header data
+			for(x=0;x<sizeof(deviceHeaderBytes)-1;x++){
+				deviceHeaderBytes[x] = 400;
+			}
+		}
+		//if eeprom is uninitialized
+		else{
+			for(x=0;x<sizeof(deviceHeaderBytes)-1;x++){
+				deviceHeaderBytes[x] = 600;
+			}
+		}
 	}
-	deviceHeaderBytes[5] = previousByteOfFF[0];
+	//deviceHeaderBytes[4] = previousByteOfHeader[0];
 	return deviceHeaderBytes;
 }

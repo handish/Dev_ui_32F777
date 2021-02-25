@@ -72,21 +72,21 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 osThreadId_t HeartbeatHandle;
 const osThreadAttr_t Heartbeat_attributes = {
   .name = "Heartbeat",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128 * 4
+  .priority = (osPriority_t) osPriorityLow5,
+  .stack_size = 256 * 4
 };
 /* Definitions for adcRead */
 osThreadId_t adcReadHandle;
 const osThreadAttr_t adcRead_attributes = {
   .name = "adcRead",
   .priority = (osPriority_t) osPriorityLow1,
-  .stack_size = 128 * 4
+  .stack_size = 256 * 4
 };
 /* Definitions for DatScreenBlink */
 osThreadId_t DatScreenBlinkHandle;
 const osThreadAttr_t DatScreenBlink_attributes = {
   .name = "DatScreenBlink",
-  .priority = (osPriority_t) osPriorityNormal,
+  .priority = (osPriority_t) osPriorityNormal2,
   .stack_size = 10000 * 4
 };
 /* Definitions for gpioInputRead */
@@ -94,14 +94,28 @@ osThreadId_t gpioInputReadHandle;
 const osThreadAttr_t gpioInputRead_attributes = {
   .name = "gpioInputRead",
   .priority = (osPriority_t) osPriorityLow2,
-  .stack_size = 128 * 4
+  .stack_size = 256 * 4
 };
 /* Definitions for navigationTask */
 osThreadId_t navigationTaskHandle;
 const osThreadAttr_t navigationTask_attributes = {
   .name = "navigationTask",
-  .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 128 * 4
+  .priority = (osPriority_t) osPriorityHigh2,
+  .stack_size = 1000 * 4
+};
+/* Definitions for errorLEDs */
+osThreadId_t errorLEDsHandle;
+const osThreadAttr_t errorLEDs_attributes = {
+  .name = "errorLEDs",
+  .priority = (osPriority_t) osPriorityLow3,
+  .stack_size = 256 * 4
+};
+/* Definitions for zionRead */
+osThreadId_t zionReadHandle;
+const osThreadAttr_t zionRead_attributes = {
+  .name = "zionRead",
+  .priority = (osPriority_t) osPriorityHigh1,
+  .stack_size = 18000 * 4
 };
 /* USER CODE BEGIN PV */
 uint16_t adc1_buf[ADC_BUF_LEN];
@@ -112,16 +126,20 @@ uint8_t adcRestart[3];
 uint8_t gpioInputBuf[12];
 //14 gpio outputs to the Dev UI
 uint8_t gpioOutputState[14];
+//error LED state Variable
+uint8_t errorLEDState[12];
+//zion status variables
+int zionStatus[13];
 
 static uint32_t i, j, k;
 
-int commandByte=1;
-int lineByte=1;
-int lineAmount=SCR_H;
-int nopBytesPerLine= 1;
-int dataBytesPerLine=SCR_W/8;
-int finalNOPByte=1;
-uint8_t transmitBuffer[48482];
+//int commandByte=1;
+//int lineByte=1;
+//int lineAmount=SCR_H;
+//int nopBytesPerLine= 1;
+//int dataBytesPerLine=SCR_W/8;
+//int finalNOPByte=1;
+//uint8_t transmitBuffer[48482];
 
 uint8_t inputButtonSet = NO_BTN_PRESS; //set to a higher value than any other button priority. 5 is the "unused" state
 /* USER CODE END PV */
@@ -151,6 +169,8 @@ void startADCRead(void *argument);
 void GetDaScreenBlink(void *argument);
 void startGpioInputRead(void *argument);
 void startNavigationTask(void *argument);
+void startErrorLEDs(void *argument);
+void startZionRead(void *argument);
 
 /* USER CODE BEGIN PFP */
 void uartTransmitChar(char *message,int uart);
@@ -226,6 +246,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   //HAL_ADC_ConfigChannel();
   outputGPIOBufInitialization();
+  memset(errorLEDState,0,sizeof(errorLEDState));
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
@@ -284,6 +305,12 @@ int main(void)
 
   /* creation of navigationTask */
   navigationTaskHandle = osThreadNew(startNavigationTask, NULL, &navigationTask_attributes);
+
+  /* creation of errorLEDs */
+  errorLEDsHandle = osThreadNew(startErrorLEDs, NULL, &errorLEDs_attributes);
+
+  /* creation of zionRead */
+  zionReadHandle = osThreadNew(startZionRead, NULL, &zionRead_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1952,8 +1979,13 @@ void GetDaScreenBlink(void *argument)
 	 uint8_t menu_val = 0;
 	 uint8_t running_menu = 0;
 	 int *readI2c;
+	 int zionCleared=0;
 	   for(;;)
 	   {
+		if((zionStatus[ZION.zionFinished]) && (!zionCleared)){
+				  //osThreadSuspend(zionReadHandle);
+				  zionCleared=1;
+		}
 	 	  ulNotifiedValue = 0;
 	 	  xTaskNotifyWait(NOTIFY_NOCLEAR, NOTIFY_CLEARALL, &ulNotifiedValue, portMAX_DELAY);
 	 	  // button press decode
@@ -1961,12 +1993,20 @@ void GetDaScreenBlink(void *argument)
 	 	  menu_val = ((ulNotifiedValue & NOTIFY_MENU_MASK) >> NOTIFY_MENU_BIT);
 	 	  running_menu = ((ulNotifiedValue & NOTIFY_RUN_MENU_MASK) >> NOTIFY_MENU_RUN_BIT);
 	 	  setVoltageMux(COMA,socI2cVoltageMux.enableSW2,0);
+
+	 	  //readI2c = parseZionEEPROM(SOC_ADDRESS);
+	 	  //int blah = *(readI2c+4);
+//		  HAL_GPIO_WritePin(ZION_PWR_EN_GPIO_Port,ZION_PWR_EN_Pin,1);
 //	 	  writeZionBinaries();
-	 	  //readI2c = parseZionEEPROM(SOC_ADDRESS);
-	 	  //int blah = *(readI2c+5);
-	 	  //clearEEPROM(SOC_ADDRESS);
-	 	  //readI2c = parseZionEEPROM(SOC_ADDRESS);
-	 	  //blah = *(readI2c+5);
+//	 	  readI2c = parseZionEEPROM(ASIC_ADDRESS);
+//	 	  int blah = *(readI2c);
+//	 	  blah = *(readI2c+2);
+//	 	  blah = *(readI2c+3);
+//	 	  //readI2c = parseZionEEPROM(DISPLAY_ADDRESS);
+	 	  //blah = *(readI2c+4);
+//	 	  clearEEPROM(SOC_ADDRESS);
+//	 	  readI2c = parseZionEEPROM(SOC_ADDRESS);
+//	 	  blah = *(readI2c+5);
 	 	  //clearEEPROM(SOC_ADDRESS);
 	 	  //clearEEPROM(ASIC_ADDRESS);
 	 	  //clearEEPROM(DISPLAY_ADDRESS);
@@ -2067,6 +2107,7 @@ void startNavigationTask(void *argument)
 	uint8_t prev_menu = menu_run;		// variable to track what the previous menu running was, this is used for the BACK button
 	uint8_t menu_Max_Items = MAX_MENU_ITEMS_MAIN_MENU;
 	uint8_t prev_menu_highlight = menu_highlight; //variable to track previous menu highlight
+	int zionCleared=0;
 	//uint8_t button_press = 1;
 	// Clear button flags here
 
@@ -2178,6 +2219,175 @@ void startNavigationTask(void *argument)
   }
 
   /* USER CODE END startNavigationTask */
+}
+
+/* USER CODE BEGIN Header_startErrorLEDs */
+/**
+* @brief Function implementing the errorLEDs thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startErrorLEDs */
+void startErrorLEDs(void *argument)
+{
+  /* USER CODE BEGIN startErrorLEDs */
+  /* Infinite loop */
+	int x;
+  for(;;)
+  {
+	  for(x=0;x<12;x++){
+		  setErrorLED(x, errorLEDState[x]);
+		  HAL_Delay(10);
+	  }
+    osDelay(1000);
+  }
+  /* USER CODE END startErrorLEDs */
+}
+
+/* USER CODE BEGIN Header_startZionRead */
+/**
+* @brief Function implementing the zionRead thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startZionRead */
+void startZionRead(void *argument)
+{
+  /* USER CODE BEGIN startZionRead */
+  /* Infinite loop */
+	float * adcValuePointer;
+	int * zionEEPROMPresent;
+	int * zionHeaderData;
+	int switchOn=0;
+	float zionVoltage=77;
+	uint8_t testData[1];
+  for(;;)
+  {
+	  if(!(zionStatus[ZION.zionFinished])){
+		  if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
+			  adcValuePointer = getADCValues();
+			  zionVoltage = *(adcValuePointer + Adc.zionADC);
+		  }
+		  if(zionVoltage != 77){
+			  if(zionVoltage > 3.0 && (!switchOn)){
+				  int runtime = (HAL_GetTick()/1000);
+				  if(runtime > 5){
+					  zionEEPROMPresent= zionEEPROMPresence();
+					  if(*zionEEPROMPresent){
+						  zionStatus[ZION.SOC_EEPROM_Detected] = 1;
+						  readDataFromEEPROM((uint8_t*)testData,SOC_ADDRESS,0x00,sizeof(testData),100);
+						  if(testData[0]==0xff){
+							  zionStatus[ZION.SOC_BoardID] = -1;
+							  zionStatus[ZION.SOC_BoardFab] = -1;
+							  zionStatus[ZION.SOC_Config] = -1;
+						  }
+						  else{
+//							  zionHeaderData = parseZionEEPROM(SOC_ADDRESS);
+//							  zionStatus[ZION.SOC_BoardID] = *(zionHeaderData);
+//							  zionStatus[ZION.SOC_BoardFab] = *(zionHeaderData+2);
+//							  zionStatus[ZION.SOC_Config] = *(zionHeaderData+3);
+						  }
+					  }
+					  if(*(zionEEPROMPresent+1)){
+						  zionStatus[ZION.ASIC_EEPROM_Detected] = 1;
+						  readDataFromEEPROM((uint8_t*)testData,ASIC_ADDRESS,0x00,sizeof(testData),100);
+						  if(testData[0]==0xff){
+							  zionStatus[ZION.ASIC_BoardID] = -1;
+							  zionStatus[ZION.ASIC_BoardFab] = -1;
+							  zionStatus[ZION.ASIC_Config] = -1;
+						  }
+						  else{
+//							  zionHeaderData = parseZionEEPROM(ASIC_ADDRESS);
+//							  zionStatus[ZION.ASIC_BoardID] = *(zionHeaderData);
+//							  zionStatus[ZION.ASIC_BoardFab] = *(zionHeaderData+2);
+//							  zionStatus[ZION.ASIC_Config] = *(zionHeaderData+3);
+						  }
+					  }
+					  if(*(zionEEPROMPresent+2)){
+						  zionStatus[ZION.DISPLAY_EEPROM_Detected] = 1;
+						  readDataFromEEPROM((uint8_t*)testData,DISPLAY_ADDRESS,0x00,sizeof(testData),100);
+						  if(testData[0]==0xff){
+							  zionStatus[ZION.DISPLAY_BoardID] = -1;
+							  zionStatus[ZION.DISPLAY_BoardFab] = -1;
+							  zionStatus[ZION.DISPLAY_Config] = -1;
+						  }
+						  else{
+//							  zionHeaderData = parseZionEEPROM(DISPLAY_ADDRESS);
+//							  zionStatus[ZION.DISPLAY_BoardID] = *(zionHeaderData);
+//							  zionStatus[ZION.DISPLAY_BoardFab] = *(zionHeaderData+2);
+							  //zionStatus[ZION.DISPLAY_Config] = *(zionHeaderData+3);
+						  }
+					  }
+					  zionStatus[ZION.zionFinished]=1;
+				  }
+			  }
+			  else{
+				  if(!switchOn){
+					  HAL_GPIO_WritePin(ZION_PWR_EN_GPIO_Port,ZION_PWR_EN_Pin,1);
+					  switchOn=1;
+				  }
+				  else{
+					  zionEEPROMPresent= zionEEPROMPresence();
+					  if(*zionEEPROMPresent){
+						  zionStatus[ZION.SOC_EEPROM_Detected] = 1;
+						  readDataFromEEPROM((uint8_t*)testData,SOC_ADDRESS,0x00,sizeof(testData),100);
+						  if(testData[0]==0xff){
+							  zionStatus[ZION.SOC_BoardID] = -1;
+							  zionStatus[ZION.SOC_BoardFab] = -1;
+							  zionStatus[ZION.SOC_Config] = -1;
+						  }
+						  else{
+							  //zionHeaderData = parseZionEEPROM(SOC_ADDRESS);
+							  //zionStatus[ZION.SOC_BoardID] = *(zionHeaderData);
+							  //zionStatus[ZION.SOC_BoardFab] = *(zionHeaderData+2);
+							  //zionStatus[ZION.SOC_Config] = *(zionHeaderData+3);
+						  }
+					  }
+					  if(*(zionEEPROMPresent+1)){
+						  zionStatus[ZION.ASIC_EEPROM_Detected] = 1;
+						  readDataFromEEPROM((uint8_t*)testData,ASIC_ADDRESS,0x00,sizeof(testData),100);
+						  if(testData[0]==0xff){
+							  zionStatus[ZION.ASIC_BoardID] = -1;
+							  zionStatus[ZION.ASIC_BoardFab] = -1;
+							  zionStatus[ZION.ASIC_Config] = -1;
+						  }
+						  else{
+							  //zionHeaderData = parseZionEEPROM(ASIC_ADDRESS);
+							  //zionStatus[ZION.ASIC_BoardID] = *(zionHeaderData);
+							  //zionStatus[ZION.ASIC_BoardFab] = *(zionHeaderData+2);
+							  //zionStatus[ZION.ASIC_Config] = *(zionHeaderData+3);
+						  }
+					  }
+					  if(*(zionEEPROMPresent+2)){
+						  zionStatus[ZION.DISPLAY_EEPROM_Detected] = 1;
+						  readDataFromEEPROM((uint8_t*)testData,DISPLAY_ADDRESS,0x00,sizeof(testData),100);
+						  if(testData[0]==0xff){
+							  zionStatus[ZION.DISPLAY_BoardID] = -1;
+							  zionStatus[ZION.DISPLAY_BoardFab] = -1;
+							  zionStatus[ZION.DISPLAY_Config] = -1;
+						  }
+						  else{
+							  //zionHeaderData = parseZionEEPROM(DISPLAY_ADDRESS);
+							  //zionStatus[ZION.DISPLAY_BoardID] = *(zionHeaderData);
+							  //zionStatus[ZION.DISPLAY_BoardFab] = *(zionHeaderData+2);
+							  //zionStatus[ZION.DISPLAY_Config] = *(zionHeaderData+3);
+						  }
+					  }
+					  zionStatus[ZION.zionFinished]=1;
+					  osThreadExit();
+				  }
+			  }
+		  }
+	  }
+	  else{
+		  osThreadExit();
+		  //HAL_Delay(40);
+	  }
+	 int x=0;
+    osDelay(400);
+
+  }
+  /* USER CODE END startZionRead */
 }
 
  /**

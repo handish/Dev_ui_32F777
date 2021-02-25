@@ -314,6 +314,23 @@ struct LED{
 };
 static struct LED LED = {0x60 << 1, 0x00, 0x14, 0x15, 0x16, 0x17, 0x1C,0x11,0x09,0x0A,0x0B, 0x08,1};
 
+struct zion{
+	int zionFinished;
+	int SOC_EEPROM_Detected;
+	int ASIC_EEPROM_Detected;
+	int DISPLAY_EEPROM_Detected;
+	int SOC_BoardID;
+	int SOC_BoardFab;
+	int SOC_Config;
+	int ASIC_BoardID;
+	int ASIC_BoardFab;
+	int ASIC_Config;
+	int DISPLAY_BoardID;
+	int DISPLAY_BoardFab;
+	int DISPLAY_Config;
+};
+static struct zion ZION = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+
 struct socI2cVoltageMux{
 	uint8_t address;
 	uint8_t CMD_A_reg;

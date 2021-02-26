@@ -492,11 +492,11 @@ void drawSystemInfoMenu(int indicator){
 	float *adcValuePointer;
 	int convertedFloat;
 	int adjacentSpacing = 20;
-	int indentAlignment=50;
+	int indentAlignment=20;
 	int arrowUp = 0;
 	int arrowDown=1;
 	int arrowSize=3;
-	int otherBoardAlignment = 220;
+	int otherBoardAlignment = 230;
 	previousMenu=0;
 	LCD_Clear();
 	 if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
@@ -546,7 +546,12 @@ void drawSystemInfoMenu(int indicator){
 
 		j+=15;
 		i=indentAlignment;
-		LCD_PutStr(i, j, "Unknown", fnt7x10);
+		if((ZION.SOC_BoardID==1) || (ZION.ASIC_BoardID==1) || (ZION.DISPLAY_BoardID==1)){
+			LCD_PutStr(i, j, "Atlas", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Unknown", fnt7x10);
+		}
 
 		j+=15;
 		i=10;
@@ -557,20 +562,136 @@ void drawSystemInfoMenu(int indicator){
 		j+=15;
 		i=indentAlignment;
 		i+=LCD_PutStr(i, j, "SOC: ", fnt7x10);
-		LCD_PutStr(i, j, "Trident Fab A", fnt7x10);
+		if(ZION.SOC_BoardID==1){
+			i+=LCD_PutStr(i, j, "TRIDENT ", fnt7x10);
+			switch(ZION.SOC_BoardFab){
+			case 1:{
+				LCD_PutStr(i, j, "FAB A", fnt7x10);
+				break;
+			}
+			case 2:{
+				LCD_PutStr(i, j, "FAB B", fnt7x10);
+				break;
+			}
+			case 3:{
+				LCD_PutStr(i, j, "FAB C", fnt7x10);
+				break;
+			}
+			case 4:{
+				LCD_PutStr(i, j, "FAB D", fnt7x10);
+				break;
+			}
+			default:{
+				LCD_PutStr(i, j, "FAB NA", fnt7x10);
+				break;
+			}
+			}
+		}
+		else{
+			if(ZION.SOC_EEPROM_Detected){
+				if(ZION.SOC_BoardFab == -2){
+					LCD_PutStr(i, j, "EEPROM-NO DEVICE DATA", fnt7x10);
+				}
+				else if(ZION.SOC_BoardFab ==-1){
+					LCD_PutStr(i, j, "EEPROM-UNINITIALIZED", fnt7x10);
+				}
+			}
+			else{
+				LCD_PutStr(i, j, "EEPROM not detected", fnt7x10);
+			}
+		}
 		i=otherBoardAlignment+indentAlignment;
 		i+=LCD_PutStr(i, j, "ZION: ", fnt7x10);
-		LCD_PutStr(i, j, "Not Here", fnt7x10);
+		if(ZION.zionSwitch){
+			LCD_PutStr(i, j, "Not detected", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Detected", fnt7x10);
+		}
 
 		j+=15;
 		i=indentAlignment;
 		i+=LCD_PutStr(i, j, "ASIC: ", fnt7x10);
-		LCD_PutStr(i, j, "Let's say it was Atlas", fnt7x10);
+		if(ZION.ASIC_BoardID==1){
+			i+=LCD_PutStr(i, j, "TOGA ", fnt7x10);
+			switch(ZION.ASIC_BoardFab){
+			case 1:{
+				LCD_PutStr(i, j, "FAB A", fnt7x10);
+				break;
+			}
+			case 2:{
+				LCD_PutStr(i, j, "FAB B", fnt7x10);
+				break;
+			}
+			case 3:{
+				LCD_PutStr(i, j, "FAB C", fnt7x10);
+				break;
+			}
+			case 4:{
+				LCD_PutStr(i, j, "FAB D", fnt7x10);
+				break;
+			}
+			default:{
+				LCD_PutStr(i, j, "FAB NA", fnt7x10);
+				break;
+			}
+			}
+		}
+		else{
+			if(ZION.ASIC_EEPROM_Detected){
+				if(ZION.ASIC_BoardFab == -2){
+					LCD_PutStr(i, j, "EEPROM-NO DEVICE DATA", fnt7x10);
+				}
+				else if(ZION.ASIC_BoardFab ==-1){
+					LCD_PutStr(i, j, "EEPROM-UNINITIALIZED", fnt7x10);
+				}
+			}
+			else{
+				LCD_PutStr(i, j, "EEPROM not detected", fnt7x10);
+			}
+		}
 
 		j+=15;
 		i=indentAlignment;
 		i+=LCD_PutStr(i, j, "DISPLAY: ", fnt7x10);
-		LCD_PutStr(i, j, "Let's say it was Atlas", fnt7x10);
+		if(ZION.DISPLAY_BoardID==1){
+			i+=LCD_PutStr(i, j, "KANU ", fnt7x10);
+			switch(ZION.DISPLAY_BoardFab){
+			case 1:{
+				LCD_PutStr(i, j, "FAB A", fnt7x10);
+				break;
+			}
+			case 2:{
+				LCD_PutStr(i, j, "FAB B", fnt7x10);
+				break;
+			}
+			case 3:{
+				LCD_PutStr(i, j, "FAB C", fnt7x10);
+				break;
+			}
+			case 4:{
+				LCD_PutStr(i, j, "FAB D", fnt7x10);
+				break;
+			}
+			default:{
+				LCD_PutStr(i, j, "FAB NA", fnt7x10);
+				break;
+			}
+			}
+		}
+		else{
+			if(ZION.DISPLAY_EEPROM_Detected){
+				if(ZION.DISPLAY_BoardFab == -2){
+					LCD_PutStr(i, j, "EEPROM-NO DEVICE DATA", fnt7x10);
+				}
+				else if(ZION.DISPLAY_BoardFab ==-1){
+					LCD_PutStr(i, j, "EEPROM-UNINITIALIZED", fnt7x10);
+				}
+			}
+			else{
+				LCD_PutStr(i, j, "EEPROM not detected", fnt7x10);
+			}
+		}
 
 		i=200;
 		j=220;
@@ -616,7 +737,12 @@ void drawSystemInfoMenu(int indicator){
 		convertedFloat = 10.0 * displayAdcValues[Adc.zionADC];
 		i+=LCD_PutIntF(i, j, convertedFloat, 1, fnt7x10) + adjacentSpacing;
 		i+=LCD_PutStr(i, j, "Zion Switch: ", fnt7x10);
-		LCD_PutStr(i, j, "INACTIVE", fnt7x10);
+		if(ZION.zionSwitch ==1){
+			LCD_PutStr(i, j, "ACTIVE", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "INACTIVE", fnt7x10);
+		}
 
 
 

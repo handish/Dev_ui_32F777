@@ -22,6 +22,8 @@ extern "C" {
 
 extern uint8_t adcRestart[3];
 extern uint8_t gpioInputBuf[12];
+extern struct zion ZION;
+extern struct bootModeButtons bootButtons;
 
 
 void initializeDisplay();

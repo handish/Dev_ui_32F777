@@ -270,6 +270,25 @@ void Error_Handler(void);
 /* Button Flag definition (shared between Button Task and Navigation Task) */
 //extern uint8_t button_press;
 
+//Boot mode button definitions
+#define BTN0_ON			HAL_GPIO_WritePin(BTN0_GPIO_Port,BTN0_Pin,ON)
+#define BTN0_OFF		HAL_GPIO_WritePin(BTN0_GPIO_Port,BTN0_Pin,OFF)
+#define BTN1_ON			HAL_GPIO_WritePin(BTN1_GPIO_Port,BTN1_Pin,ON)
+#define BTN1_OFF		HAL_GPIO_WritePin(BTN1_GPIO_Port,BTN1_Pin,OFF)
+#define BTN2_ON			HAL_GPIO_WritePin(BTN2_GPIO_Port,BTN2_Pin,ON)
+#define BTN2_OFF		HAL_GPIO_WritePin(BTN2_GPIO_Port,BTN2_Pin,OFF)
+#define BTN3_ON			HAL_GPIO_WritePin(BTN3_GPIO_Port,BTN3_Pin,ON)
+#define BTN3_OFF		HAL_GPIO_WritePin(BTN3_GPIO_Port,BTN3_Pin,OFF)
+#define BTN4_ON			HAL_GPIO_WritePin(BTN4_GPIO_Port,BTN4_Pin,ON)
+#define BTN4_OFF		HAL_GPIO_WritePin(BTN4_GPIO_Port,BTN4_Pin,OFF)
+#define BTN5_ON			HAL_GPIO_WritePin(BTN5_GPIO_Port,BTN5_Pin,ON)
+#define BTN5_OFF		HAL_GPIO_WritePin(BTN5_GPIO_Port,BTN5_Pin,OFF)
+
+#define EDL_SW_ON		HAL_GPIO_WritePin(EDL_EN_GPIO_Port,EDL_EN_Pin,ON)
+#define EDL_SW_OFF		HAL_GPIO_WritePin(EDL_EN_GPIO_Port,EDL_EN_Pin,OFF)
+#define EX_SW_ON		HAL_GPIO_WritePin(SPARE_SW_EN_GPIO_Port,SPARE_SW_EN_Pin,ON)
+#define EX_SW_OFF		HAL_GPIO_WritePin(SPARE_SW_EN_GPIO_Port,SPARE_SW_EN_Pin,OFF)
+
 /* Navigation control defines */
 #define MENU_TOP							1
 #define MAX_MENU_ITEMS_MAIN_MENU			3
@@ -314,8 +333,20 @@ struct LED{
 };
 static struct LED LED = {0x60 << 1, 0x00, 0x14, 0x15, 0x16, 0x17, 0x1C,0x11,0x09,0x0A,0x0B, 0x08,1};
 
+struct bootModeButtons{
+	int btn0;
+	int btn1;
+	int btn2;
+	int btn3;
+	int btn4;
+	int btn5;
+	int edl_sw;
+	int ex_sw;
+};
+
 struct zion{
 	int zionFinished;
+	int zionSwitch;
 	int SOC_EEPROM_Detected;
 	int ASIC_EEPROM_Detected;
 	int DISPLAY_EEPROM_Detected;
@@ -329,7 +360,7 @@ struct zion{
 	int DISPLAY_BoardFab;
 	int DISPLAY_Config;
 };
-static struct zion ZION = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+
 
 struct socI2cVoltageMux{
 	uint8_t address;
@@ -385,7 +416,7 @@ struct outputGPIOs{
 	int configOut_1;
 	int configOut_2;
 	int configOut_3;
-	int odOut_0;
+	int odOut_0;  //configure this assuming MSM_RESIN
 	int odOut_1;
 };
 static struct outputGPIOs outputGPIOs = {0,1,2,3,4,5,6,7,8,9,10,11,12,13};

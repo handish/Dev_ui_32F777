@@ -55,16 +55,21 @@ void writeZionBinaries(){
 	  zionEEPROM = zionEEPROMPresence();
 	  if(*zionEEPROM){ // only do the actions if the SOC EEPROM is detected
 	 	  clearEEPROM(SOC_ADDRESS);
-		  writeDataToEEPROM((uint8_t*)zionEEPROMCarabao,SOC_ADDRESS,0x0,sizeof(zionEEPROMCarabao), 100);
+		  HAL_Delay(100);
+		  writeDataToEEPROM((uint8_t*)zionEEPROMTrident,SOC_ADDRESS,0x0,sizeof(zionEEPROMTrident), 100);
+		  HAL_Delay(100);
 	  }
 	  if(*(zionEEPROM+1)){ // only do the actions if the ASIC EEPROM is detected
-	 	  clearEEPROM(ASIC_ADDRESS);
+	 	 clearEEPROM(ASIC_ADDRESS);
+		 HAL_Delay(100);
 		 writeDataToEEPROM((uint8_t*)zionEEPROMToga,ASIC_ADDRESS,0x0,sizeof(zionEEPROMToga), 100);
+		 HAL_Delay(100);
 	  }
 	  if(*(zionEEPROM+2)){ //only do the actions if the DISPLAY EEPROM is detected
 	 	 clearEEPROM(DISPLAY_ADDRESS);
+		 HAL_Delay(100);
 		 writeDataToEEPROM((uint8_t*)zionEEPROMKanu,DISPLAY_ADDRESS,0x0,sizeof(zionEEPROMKanu), 500);
-
+		 HAL_Delay(100);
 	  }
 }
 
@@ -89,10 +94,9 @@ int * parseZionEEPROM(uint8_t chipAddress){
 	//if the eeprom is uninitialized and/or improperly formated, just end.
 	if(letsParseSomeBytes[0] == 0xff){
 		foundTheEnd=1;
-		previousByteOfHeader[0]=index;
+		previousByteOfHeader[0]= -2;
 	}
 	while(!foundTheEnd){
-		//if the eeprom is uninitialized and/or improperly formated, just end.
 		//every time we reach the end of our data, store it in the past buffer and get more!
 		if(!(index%size) & (index>0)){
 			for(x=0;x<size;x++){
@@ -107,7 +111,7 @@ int * parseZionEEPROM(uint8_t chipAddress){
 			foundTheEnd=1;
 		}
 		//if((letsParseSomeBytes[index] == 0xff)){
-		if(((letsParseSomeBytes[index-indexSubtractor] == 0x5a))|| ((letsParseSomeBytes[previousByteOfHeader[0]%size] == 0x5a) && (index < previousByteOfHeader[0]+20)) || ((pastParsedBytes[previousByteOfHeader[0]%size] == 0x5a) && (index < previousByteOfHeader[0]+20))){
+		else if(((letsParseSomeBytes[index-indexSubtractor] == 0x5a))|| ((letsParseSomeBytes[previousByteOfHeader[0]%size] == 0x5a) && (index < previousByteOfHeader[0]+20)) || ((pastParsedBytes[previousByteOfHeader[0]%size] == 0x5a) && (index < previousByteOfHeader[0]+20))){
 			if((previousByteOfHeader[0] == 0) & (!zeroWas5A) & ((letsParseSomeBytes[index-indexSubtractor] == 0x5a))){
 				previousByteOfHeader[0] = index;
 				if(index==0){
@@ -150,7 +154,7 @@ int * parseZionEEPROM(uint8_t chipAddress){
 		index++;
 	}
 	//if the eemprom is initialized
-	if(previousByteOfHeader[0]>6){
+	if(previousByteOfHeader[0]>=0){
 		//figure out on which index our data started
 		int remainder = previousByteOfHeader[16]%size;
 		//if some of our data is split between past read and present read
@@ -178,17 +182,17 @@ int * parseZionEEPROM(uint8_t chipAddress){
 		//send invalid data
 		if(previousByteOfHeader[0] == -1){
 			//if eeprom is initialized but no device header data
-			for(x=0;x<sizeof(deviceHeaderBytes)-1;x++){
-				deviceHeaderBytes[x] = 400;
+			for(x=0;x<4;x++){
+				deviceHeaderBytes[x] = -2;
 			}
 		}
 		//if eeprom is uninitialized
 		else{
-			for(x=0;x<sizeof(deviceHeaderBytes)-1;x++){
-				deviceHeaderBytes[x] = 600;
+			for(x=0;x<4;x++){
+				deviceHeaderBytes[x] = -1;
 			}
 		}
 	}
-	//deviceHeaderBytes[4] = previousByteOfHeader[0];
+	deviceHeaderBytes[4] = previousByteOfHeader[0];
 	return deviceHeaderBytes;
 }

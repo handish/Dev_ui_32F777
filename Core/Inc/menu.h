@@ -20,6 +20,8 @@ extern "C" {
 #define FOURTH			4
 #define FIFTH			5
 
+#define ATLAS			1
+
 extern uint8_t adcRestart[3];
 extern uint8_t gpioInputBuf[12];
 extern struct zion ZION;
@@ -31,5 +33,7 @@ void drawMainMenu(int indicator);
 void drawStatusMenu(int indicator);
 void drawSystemInfoMenu(int indicator);
 void drawBootMenu(int indicator, uint8_t button, int menu);
+void drawMenuHeader();
+void getLatestADC();
 
 #endif /* INC_MENU_H_ */

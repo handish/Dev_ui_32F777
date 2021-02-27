@@ -8,6 +8,7 @@
 
 int previousMenu = 0;
 float displayAdcValues[21];
+int setIndicator=0;
 
 void initializeDisplay(){
 	SMLCD_InitGPIO();
@@ -27,6 +28,7 @@ void initializeDisplay(){
 void drawMainMenu(int indicator){
 	int i,j;
 	previousMenu=0;
+	getLatestADC();
 	LCD_Clear();
 	LCD_PixelMode = LCD_PSET;
 	LCD_Rect(0, 0, scr_width - 1, scr_height - 1);
@@ -39,7 +41,31 @@ void drawMainMenu(int indicator){
 	i += LCD_PutStr(i, j, "So many!", fnt7x10);
 	i+=20;
 	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
-	i += LCD_PutStr(i, j, "QED", fnt7x10);
+	if(displayAdcValues[Adc.adc0] >3.5){
+		switch(bootButtons.bootMode){
+		case UNINITIALIZED:
+			LCD_PutStr(i, j, "OFF", fnt7x10);
+			break;
+		case STANDARD:
+			LCD_PutStr(i, j, "OS", fnt7x10);
+			break;
+		case UEFI:
+			LCD_PutStr(i, j, "UEFI", fnt7x10);
+			break;
+		case EDL:
+			LCD_PutStr(i, j, "EDL", fnt7x10);
+			break;
+		case MASS_STORAGE:
+			LCD_PutStr(i, j, "MASS", fnt7x10);
+			break;
+		case RECOVERY:
+			LCD_PutStr(i, j, "FFU", fnt7x10);
+			break;
+		}
+	}
+	else{
+		LCD_PutStr(i, j, "OFF", fnt7x10);
+	}
 	i  = 135;
 	j += 14;
 
@@ -149,7 +175,7 @@ void drawMainMenu(int indicator){
 
 void drawStatusMenu(int indicator){
 	int i,j;
-	float *adcValuePointer;
+	//float *adcValuePointer;
 	int convertedFloat;
 	int adjacentSpacing = 20;
 	int inputGpioAlignment=245;
@@ -160,31 +186,30 @@ void drawStatusMenu(int indicator){
 	int arrowSize=3;
 	previousMenu=0;
 	LCD_Clear();
-	 if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
- 		  adcValuePointer = getADCValues();
- 		  for(i=0;i<20;i++){
-	  		  displayAdcValues[i]=*adcValuePointer;
-	  		  adcValuePointer++;
- 		  }
-	 }
-	LCD_PixelMode = LCD_PSET;
-
-	LCD_Rect(0, 0, scr_width - 1, scr_height - 1);
-	LCD_Rect(2, 2, scr_width - 3, scr_height - 3);
-
-	// RTC :)
-	i  = 10;
-	j  = 10;
-	i += LCD_PutStr(i, j, "FAULTS:", fnt7x10);
-	i += LCD_PutStr(i, j, "So many!", fnt7x10);
-	i+=170;
-	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
-	i += LCD_PutStr(i, j, "QED", fnt7x10);
+	getLatestADC();
+	drawMenuHeader();
 	i  = 135;
-	j += 12;
-
+	j = 24;
 	//horizontal divider
 	LCD_FillRect(2, j, scr_width - 2, j + 3);
+//	LCD_PixelMode = LCD_PSET;
+//
+//	LCD_Rect(0, 0, scr_width - 1, scr_height - 1);
+//	LCD_Rect(2, 2, scr_width - 3, scr_height - 3);
+//
+//	// RTC :)
+//	i  = 10;
+//	j  = 10;
+//	i += LCD_PutStr(i, j, "FAULTS:", fnt7x10);
+//	i += LCD_PutStr(i, j, "So many!", fnt7x10);
+//	i+=170;
+//	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
+//	i += LCD_PutStr(i, j, "QED", fnt7x10);
+//	i  = 135;
+//	j += 12;
+//
+//	//horizontal divider
+//	LCD_FillRect(2, j, scr_width - 2, j + 3);
 	switch(indicator){
 	case 1:{
 		i=35;
@@ -202,7 +227,12 @@ void drawStatusMenu(int indicator){
 		LCD_PutStr(i, j, "placeholder", fnt7x10);
 		i=daughterCardAlignment;
 		i+= LCD_PutStr(i, j, "SOC: ", fnt7x10);
-		LCD_PutStr(i,j,"placeholder", fnt7x10);
+		if(ZION.SOC_EEPROM_Detected){
+			LCD_PutStr(i,j,"Detected", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i,j,"Undetected", fnt7x10);
+		}
 
 		i=10;
 		j+=15;
@@ -210,15 +240,24 @@ void drawStatusMenu(int indicator){
 		LCD_PutStr(i, j, "placeholder", fnt7x10);
 		i=daughterCardAlignment;
 		i+= LCD_PutStr(i, j, "ASIC: ", fnt7x10);
-		LCD_PutStr(i,j,"placeholder", fnt7x10);
-
+		if(ZION.ASIC_EEPROM_Detected){
+			LCD_PutStr(i,j,"Detected", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i,j,"Undetected", fnt7x10);
+		}
 		i=10;
 		j+=15;
 		i+= LCD_PutStr(i, j, "Fault2: ", fnt7x10);
 		LCD_PutStr(i, j, "placeholder", fnt7x10);
 		i=daughterCardAlignment;
 		i+= LCD_PutStr(i, j, "Display: ", fnt7x10);
-		LCD_PutStr(i,j,"placeholder", fnt7x10);
+		if(ZION.DISPLAY_EEPROM_Detected){
+			LCD_PutStr(i,j,"Detected", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i,j,"Undetected", fnt7x10);
+		}
 
 		i=10;
 		j+=15;
@@ -489,7 +528,7 @@ void drawStatusMenu(int indicator){
 
 void drawSystemInfoMenu(int indicator){
 	int i,j;
-	float *adcValuePointer;
+	//float *adcValuePointer;
 	int convertedFloat;
 	int adjacentSpacing = 20;
 	int indentAlignment=20;
@@ -499,30 +538,30 @@ void drawSystemInfoMenu(int indicator){
 	int otherBoardAlignment = 230;
 	previousMenu=0;
 	LCD_Clear();
-	 if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
- 		  adcValuePointer = getADCValues();
- 		  for(i=0;i<20;i++){
-	  		  displayAdcValues[i]=*adcValuePointer;
-	  		  adcValuePointer++;
- 		  }
-	 }
-	LCD_PixelMode = LCD_PSET;
-
-	LCD_Rect(0, 0, scr_width - 1, scr_height - 1);
-	LCD_Rect(2, 2, scr_width - 3, scr_height - 3);
-
-	// RTC :)
-	i  = 10;
-	j  = 10;
-	i += LCD_PutStr(i, j, "FAULTS:", fnt7x10);
-	i += LCD_PutStr(i, j, "So many!", fnt7x10);
-	i+=170;
-	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
-	i += LCD_PutStr(i, j, "QED", fnt7x10);
+	getLatestADC();
+	drawMenuHeader();
 	i  = 135;
-	j += 12;
+	j = 24;
 	//horizontal divider
 	LCD_FillRect(2, j, scr_width - 2, j + 3);
+//	LCD_PixelMode = LCD_PSET;
+//
+//	LCD_Rect(0, 0, scr_width - 1, scr_height - 1);
+//	LCD_Rect(2, 2, scr_width - 3, scr_height - 3);
+//
+//	// RTC :)
+//	i  = 10;
+//	j  = 10;
+//	i += LCD_PutStr(i, j, "FAULTS:", fnt7x10);
+//	i += LCD_PutStr(i, j, "So many!", fnt7x10);
+//	i+=170;
+//	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
+//	i += LCD_PutStr(i, j, "QED", fnt7x10);
+//	i  = 135;
+//	j += 12;
+//	//horizontal divider
+//	LCD_FillRect(2, j, scr_width - 2, j + 3);
+
 	switch(indicator){
 
 	case 1:{
@@ -767,94 +806,364 @@ void drawBootMenu(int indicator, uint8_t button, int menu){
 
 
 		LCD_Clear();
-		LCD_PixelMode = LCD_PSET;
-
-		LCD_Rect(0, 0, scr_width - 1, scr_height - 1);
-		LCD_Rect(2, 2, scr_width - 3, scr_height - 3);
-
-		// RTC :)
-		i  = 10;
-		j  = 10;
-		i += LCD_PutStr(i, j, "FAULTS:", fnt7x10);
-		i += LCD_PutStr(i, j, "So many!", fnt7x10);
-		i+=170;
-		i += LCD_PutStr(i, j, "MODE:", fnt7x10);
-		i += LCD_PutStr(i, j, "QED", fnt7x10);
+		getLatestADC();
+		drawMenuHeader();
 		i  = 135;
-		j += 12;
-
+		j = 24;
 		//horizontal divider
 		LCD_FillRect(2, j, scr_width - 2, j + 3);
+		if(displayAdcValues[Adc.adc0] >3.5){
+			if(ZION.zionFinished){
+				if((ZION.SOC_BoardFab == ATLAS) || (ZION.ASIC_BoardFab == ATLAS) || (ZION.DISPLAY_BoardFab == ATLAS)){
+					j=45;
+					i=5;
+					LCD_PutStr(i,j, "ATLAS RECOGNIZED. PROVIDING ATLAS BOOT MODES:", fnt7x10);
+					j+=30;
+					i=42;
+					LCD_PutStr(i, j, "Please Select Boot Mode:", fnt7x10);
+					i=indentAlignment;
+					j+=20;
+					LCD_PutStr(i, j, "STANDARD", fnt7x10);
+					j+=20;
+					LCD_PutStr(i, j, "EMERGENCY DOWNLOAD", fnt7x10);
+					j+=20;
+					LCD_PutStr(i, j, "RECOVERY", fnt7x10);
+					j+=20;
+					LCD_PutStr(i, j, "MASS STORAGE", fnt7x10);
+					j+=20;
+					LCD_PutStr(i, j, "UEFI", fnt7x10);
+					i-= 17;
+					if(setIndicator==0){
+						switch(indicator){
+						case FIRST:
+						{
+							j=95;
+							if((button == SEL) & (previousMenu == menu)){
+								i=140;
+								drawUpDownArrow(i, j+5, 3, 3);
+								bootButtons.btn0=1;
+								bootButtons.bootModeSet=1;
+								setIndicator=1;
+							}
 
-		j=45;
-		i=42;
-		LCD_PutStr(i, j, "Please Select Boot Mode:", fnt7x10);
-		j+=20;
-		i=indentAlignment;
-		LCD_PutStr(i, j, "STANDARD", fnt7x10);
-		j+=20;
-		LCD_PutStr(i, j, "EMERGENCY DOWNLOAD", fnt7x10);
-		j+=20;
-		LCD_PutStr(i, j, "RECOVERY", fnt7x10);
-		j+=20;
-		LCD_PutStr(i, j, "MASS STORAGE", fnt7x10);
-		j+=20;
-		LCD_PutStr(i, j, "UEFI", fnt7x10);
-		i-= 17;
-		switch(indicator){
-		case FIRST:
-		{
-			j=65;
-			if((button == SEL) & (previousMenu == menu)){
-				i=140;
-				drawUpDownArrow(i, j+5, 3, 3);
+							break;
+						}
+						case SECOND:
+						{
+							j=115;
+							if((button == SEL) & (previousMenu == menu)){
+								i=220;
+								drawUpDownArrow(i, j+5, 3, 3);
+								bootButtons.edl_sw=1;
+								bootButtons.bootModeSet=1;
+								setIndicator=2;
+							}
+
+							break;
+						}
+						case THIRD:
+						{
+							j=135;
+							if((button == SEL) & (previousMenu == menu)){
+								i=130;
+								drawUpDownArrow(i, j+5, 3, 3);
+								bootButtons.btn1=1;
+								bootButtons.bootModeSet=1;
+								setIndicator=3;
+							}
+
+							break;
+						}
+						case FOURTH:
+						{
+							j=155;
+							if((button == SEL) & (previousMenu == menu)){
+								i=160;
+								drawUpDownArrow(i, j+5, 3, 3);
+								bootButtons.btn2=1;
+								bootButtons.bootModeSet=1;
+								setIndicator=4;
+							}
+
+							break;
+						}
+						case FIFTH:
+						{
+							j=175;
+							if((button == SEL) & (previousMenu == menu)){
+								i=100;
+								drawUpDownArrow(i, j+5, 3, 3);
+								bootButtons.btn3=1;
+								bootButtons.bootModeSet=1;
+								setIndicator=5;
+							}
+
+							break;
+						}
+						default:
+						{
+							j=95;
+							break;
+						}
+						}
+					}
+					else{
+						switch(setIndicator){
+						case FIRST:
+						{
+							j=95;
+							i=140;
+							drawUpDownArrow(i, j+5, 3, 3);
+							if(bootButtons.modeClear){
+								setIndicator=0;
+							}
+							break;
+						}
+						case SECOND:
+						{
+							j=115;
+							i=220;
+							drawUpDownArrow(i, j+5, 3, 3);
+							if(bootButtons.modeClear){
+								setIndicator=0;
+							}
+							break;
+						}
+						case THIRD:
+						{
+							j=135;
+							i=130;
+							drawUpDownArrow(i, j+5, 3, 3);
+							if(bootButtons.modeClear){
+								setIndicator=0;
+							}
+							break;
+						}
+						case FOURTH:
+						{
+							j=155;
+							i=160;
+							drawUpDownArrow(i, j+5, 3, 3);
+							if(bootButtons.modeClear){
+								setIndicator=0;
+							}
+							break;
+						}
+						case FIFTH:
+						{
+							j=175;
+							i=100;
+							drawUpDownArrow(i, j+5, 3, 3);
+							if(bootButtons.modeClear){
+								setIndicator=0;
+							}
+							break;
+						}
+						default:
+						{
+							drawUpDownArrow(i, j+5, 3, 3);
+							break;
+						}
+						}
+					}
+				}
+				else{
+					j=45;
+					i=5;
+					LCD_PutStr(i,j, "UNKNOWN SYSTEM. STANDARD MODE ONLY:", fnt7x10);
+					j+=30;
+					i=42;
+					LCD_PutStr(i, j, "Please Select Boot Mode:", fnt7x10);
+					i=indentAlignment;
+					j+=20;
+					LCD_PutStr(i, j, "STANDARD", fnt7x10);
+					if(setIndicator==0){
+						switch(indicator){
+						case FIRST:
+						{
+							j=95;
+							if((button == SEL) & (previousMenu == menu)){
+								i=140;
+								drawUpDownArrow(i, j+5, 3, 3);
+								bootButtons.btn0=1;
+								bootButtons.bootModeSet=1;
+								setIndicator=1;
+							}
+							break;
+						}
+						default:
+						{
+							j=95;
+							if((button == SEL) & (previousMenu == menu)){
+								i=140;
+								drawUpDownArrow(i, j+5, 3, 3);
+								bootButtons.btn0=1;
+								bootButtons.bootModeSet=1;
+								setIndicator=1;
+							}
+							break;
+						}
+						}
+					}
+					else{
+						switch(setIndicator){
+						case FIRST:
+						{
+							j=95;
+							i=140;
+							drawUpDownArrow(i, j+5, 3, 3);
+							if(bootButtons.modeClear){
+								setIndicator=0;
+							}
+							break;
+						}
+						default:
+						{
+							j=95;
+							i=140;
+							drawUpDownArrow(i, j+5, 3, 3);
+							if(bootButtons.modeClear){
+								setIndicator=0;
+							}
+							break;
+						}
+						}
+					}
+				}
 			}
-			break;
-		}
-		case SECOND:
-		{
-			j=85;
-			if((button == SEL) & (previousMenu == menu)){
-				i=220;
-				drawUpDownArrow(i, j+5, 3, 3);
+			else{
+				j=45;
+				i=15;
+				LCD_PutStr(i,j, "WAITING ON ZION INFO. STANDARD MODE ONLY:", fnt7x10);
+				j+=30;
+				i=42;
+				LCD_PutStr(i, j, "Please Select Boot Mode:", fnt7x10);
+				i=indentAlignment;
+				j+=20;
+				LCD_PutStr(i, j, "STANDARD", fnt7x10);
+				if(setIndicator==0){
+					switch(indicator){
+					case FIRST:
+					{
+						j=95;
+						if((button == SEL) & (previousMenu == menu)){
+							i=140;
+							drawUpDownArrow(i, j+5, 3, 3);
+							bootButtons.btn0=1;
+							bootButtons.bootModeSet=1;
+							setIndicator=1;
+						}
+						break;
+					}
+					default:
+					{
+						j=95;
+						if((button == SEL) & (previousMenu == menu)){
+							i=140;
+							drawUpDownArrow(i, j+5, 3, 3);
+							bootButtons.btn0=1;
+							bootButtons.bootModeSet=1;
+							setIndicator=1;
+						}
+						break;
+					}
+					}
+				}
+				else{
+					switch(setIndicator){
+					case FIRST:
+					{
+						j=95;
+						i=140;
+						drawUpDownArrow(i, j+5, 3, 3);
+						if(bootButtons.modeClear){
+							setIndicator=0;
+						}
+						break;
+					}
+					default:
+					{
+						j=95;
+						i=140;
+						drawUpDownArrow(i, j+5, 3, 3);
+						if(bootButtons.modeClear){
+							setIndicator=0;
+						}
+						break;
+					}
+					}
+				}
 			}
-			break;
 		}
-		case THIRD:
-		{
-			j=105;
-			if((button == SEL) & (previousMenu == menu)){
-				i=130;
-				drawUpDownArrow(i, j+5, 3, 3);
-			}
-			break;
-		}
-		case FOURTH:
-		{
-			j=125;
-			if((button == SEL) & (previousMenu == menu)){
-				i=160;
-				drawUpDownArrow(i, j+5, 3, 3);
-			}
-			break;
-		}
-		case FIFTH:
-		{
-			j=145;
-			if((button == SEL) & (previousMenu == menu)){
-				i=100;
-				drawUpDownArrow(i, j+5, 3, 3);
-			}
-			break;
-		}
-		default:
-		{
-			j=75;
-			break;
-		}
+		else{
+			j=110;
+			i=120;
+			bootButtons.bootMode=0;
+			LCD_PutStr(i,j, "POWER SWITCH DISABLED!", fnt7x10);
+			j+=14;
+			i=75;
+			LCD_PutStr(i,j, "Flip Switch to enable Boot Options!", fnt7x10);
 		}
 		previousMenu=menu;
 		i=25;
 		LCD_FillRect(i, j, i + 12, j + 10);
 		SMLCD_Flush();
+}
+
+void drawMenuHeader(){
+	int i, j;
+	LCD_PixelMode = LCD_PSET;
+
+	LCD_Rect(0, 0, scr_width - 1, scr_height - 1);
+	LCD_Rect(2, 2, scr_width - 3, scr_height - 3);
+
+	// RTC :)
+	i  = 10;
+	j  = 10;
+	i += LCD_PutStr(i, j, "FAULTS:", fnt7x10);
+	i += LCD_PutStr(i, j, "So many!", fnt7x10);
+	i+=170;
+	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
+	if(displayAdcValues[Adc.adc0] >3.5){
+		switch(bootButtons.bootMode){
+		case UNINITIALIZED:
+			LCD_PutStr(i, j, "OFF", fnt7x10);
+			break;
+		case STANDARD:
+			LCD_PutStr(i, j, "OS", fnt7x10);
+			break;
+		case UEFI:
+			LCD_PutStr(i, j, "UEFI", fnt7x10);
+			break;
+		case EDL:
+			LCD_PutStr(i, j, "EDL", fnt7x10);
+			break;
+		case MASS_STORAGE:
+			LCD_PutStr(i, j, "MASS", fnt7x10);
+			break;
+		case RECOVERY:
+			LCD_PutStr(i, j, "FFU", fnt7x10);
+			break;
+		}
+	}
+	else{
+		LCD_PutStr(i, j, "OFF", fnt7x10);
+	}
+
+	i  = 135;
+	j += 14;
+
+
+}
+
+void getLatestADC(){
+	int i;
+	float * adcValuePointer;
+	 if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
+		  adcValuePointer = getADCValues();
+		  for(i=0;i<20;i++){
+	  		  displayAdcValues[i]=*adcValuePointer;
+	  		  adcValuePointer++;
+		  }
+	 }
 }

@@ -139,10 +139,10 @@ uint8_t errorLEDState[12];
 static uint32_t i, j, k;
 
 //zion status variables
-struct zion ZION = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+struct zion ZION = {0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 //boot mode variables
-struct bootModeButtons bootButtons = {0,0,0,0,0,0,0,0};
+struct bootModeButtons bootButtons = {0,0,0,0,0,0,0,0,0,0};
 
 //int commandByte=1;
 //int lineByte=1;
@@ -356,7 +356,7 @@ int main(void)
   zionReadHandle = osThreadNew(startZionRead, NULL, &zionRead_attributes);
 
   /* creation of bootButtons */
-  //bootButtonsHandle = osThreadNew(startBootButtons, NULL, &bootButtons_attributes);
+  bootButtonsHandle = osThreadNew(startBootButtons, NULL, &bootButtons_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1511,6 +1511,10 @@ int __io_putchar(int ch)
 
 void outputGPIOBufInitialization(){
 	memset(gpioOutputState,0,sizeof(gpioOutputState));
+	setOutputGPIOState(outputGPIOs.odOut_0, ON); //set OD to high impediance
+	setOutputGPIOState(outputGPIOs.odOut_1, ON); //set OD to high impediance
+	gpioOutputState[outputGPIOs.odOut_0]=1;
+	gpioOutputState[outputGPIOs.odOut_1]=1;
 }
 
 void setOutputGPIOState(int gpio, int state){
@@ -2038,10 +2042,10 @@ void GetDaScreenBlink(void *argument)
 	 	  button_val = (ulNotifiedValue & NOTIFY_BTN_MASK);
 	 	  menu_val = ((ulNotifiedValue & NOTIFY_MENU_MASK) >> NOTIFY_MENU_BIT);
 	 	  running_menu = ((ulNotifiedValue & NOTIFY_RUN_MENU_MASK) >> NOTIFY_MENU_RUN_BIT);
-	 	  if(!(x%400)){
-	 		  bootButtons.btn5=1;
-	 		  x++;
-	 	  }
+	 	  //if(!(x%400)){
+	 	//	  bootButtons.btn5=1;
+	 		//  x++;
+	 	  //}
 	 	  //setVoltageMux(COMA,socI2cVoltageMux.enableSW2,0);
 
 	 	  //readI2c = parseZionEEPROM(SOC_ADDRESS);
@@ -2168,7 +2172,7 @@ void startNavigationTask(void *argument)
 	{
 	case UP:
 	{
-		if (menu_highlight == MENU_TOP)
+		if ((menu_highlight == MENU_TOP) || bootButtons.bootModeSet)
 		{
 			//do nothing
 		}
@@ -2186,7 +2190,7 @@ void startNavigationTask(void *argument)
 	}
 	case DWN:
 	{
-		if (menu_highlight >= menu_Max_Items)
+		if ((menu_highlight >= menu_Max_Items) || (bootButtons.bootModeSet))
 		{
 			//do nothing
 		}
@@ -2205,8 +2209,10 @@ void startNavigationTask(void *argument)
 	}
 	case BACK:
 	{
-		menu_run = prev_menu;
-		menu_highlight = prev_menu_highlight; //set the highlight back to where it was for the previous menu.
+		if(!(bootButtons.bootModeSet)){
+			menu_run = prev_menu;
+			menu_highlight = prev_menu_highlight; //set the highlight back to where it was for the previous menu.
+		}
 		// task notify the display task with SEL and what menu to run
 		// task notification U32 bits defined as:
 		// [0:3]: menu button flags [0]:UP, [1]:DWN, [2]:SEL, [3]:Reserved
@@ -2321,7 +2327,7 @@ void startZionRead(void *argument)
 		  if(zionVoltage != 77){
 			  if(zionVoltage > 3.0 && (!switchOn)){
 				  int runtime = (HAL_GetTick()/1000);
-				  if(runtime > 5){
+				  if(runtime > 15){
 					  zionEEPROMPresent= zionEEPROMPresence();
 					  if(*zionEEPROMPresent){
 						  ZION.SOC_EEPROM_Detected = 1;
@@ -2412,76 +2418,174 @@ void startBootButtons(void *argument)
 	int presentTime=0;
   for(;;)
   {
-	  presentTime = (HAL_GetTick());
-	  if((bootButtons.btn0) || pwrBtnReady){ //power button
-		  BTN0_ON;
-		  timeTurnedOn = (HAL_GetTick());
-		  pwrBtnReady=0;
-		  pwrOn = 1;
-	  }
-	  else if(((presentTime-timeTurnedOn) > 600) && pwrOn && (timeTurnedOn !=0)){
-		  BTN0_OFF;
-		  pwrOn=0;
-		  timeTurnedOn=0;
-		  bootButtons.btn0=0;
-		  bootButtons.btn1=0;
-		  bootButtons.btn2=0;
-		  bootButtons.btn3=0;
-		  bootButtons.btn4=0;
-		  bootButtons.btn5=0;
-		  bootButtons.edl_sw=0;
-		  bootButtons.ex_sw=0;
-	  }
-	  if(bootButtons.btn1){
-		  BTN1_ON;
-		  pwrBtnReady=1;
-	  }
-	  else if(!(bootButtons.btn1)){
-		  BTN1_OFF;
-	  }
-	  if(bootButtons.btn2){
-		  BTN2_ON;
-		  pwrBtnReady=1;
-	  }
-	  else if(!(bootButtons.btn2)){
-		  BTN2_OFF;
-	  }
-	  if(bootButtons.btn3){
-		  BTN3_ON;
-		  pwrBtnReady=1;
-	  }
-	  else if(!(bootButtons.btn3)){
-		  BTN3_OFF;
-	  }
-	  if(bootButtons.btn4){
-		  BTN4_ON;
-		  pwrBtnReady=1;
-	  }
-	  else if(!(bootButtons.btn4)){
-		  BTN4_OFF;
-	  }
-	  if(bootButtons.btn5){
-		  BTN5_ON;
-		  pwrBtnReady=1;
-	  }
-	  else if(!(bootButtons.btn5)){
-		  BTN5_OFF;
-	  }
-	  if(bootButtons.edl_sw){
-		  EDL_SW_ON;
-		  pwrBtnReady=1;
-	  }
-	  else if(!(bootButtons.edl_sw)){
-		  EDL_SW_OFF;
-	  }
-	  if(bootButtons.ex_sw){
-		  EX_SW_ON;
-		  pwrBtnReady=1;
-	  }
-	  else if(!(bootButtons.ex_sw)){
-		  EX_SW_OFF;
-	  }
+	  if(bootButtons.bootModeSet){
+		  presentTime = (HAL_GetTick());
+		  if(timeTurnedOn==0){
+			  timeTurnedOn=presentTime;
+		  }
+		  if(bootButtons.bootMode !=0){
+			  if(bootButtons.btn1){ //DPAD UP
+				  BTN1_ON;
+				  pwrBtnReady=1;
+			  }
+			  if(bootButtons.btn2){ //DPAD RIGHT
+				  BTN2_ON;
+				  pwrBtnReady=1;
+			  }
+			  if(bootButtons.btn3){ //DPAD LEFT
+				  BTN3_ON;
+				  pwrBtnReady=1;
+			  }
+			  if(bootButtons.btn4){
+				  BTN4_ON;
+				  pwrBtnReady=1;
+			  }
+			  if(bootButtons.btn5){
+				  BTN5_ON;
+				  pwrBtnReady=1;
+			  }
+			  if(bootButtons.edl_sw){
+				  EDL_SW_ON;
+				  pwrBtnReady=1;
+			  }
+			  if(bootButtons.ex_sw){
+				  EX_SW_ON;
+				  pwrBtnReady=1;
+			  }
+			  setOutputGPIOState(outputGPIOs.odOut_0, OFF); //set the reset GPIO.
+			  osDelay(500);
+			  setOutputGPIOState(outputGPIOs.odOut_0, ON); //turn off the reset GPIO
+			  osDelay(500);
+			  BTN1_OFF;
+			  BTN2_OFF;
+			  BTN3_OFF;
+			  BTN4_OFF;
+			  BTN5_OFF;
+			  EDL_SW_OFF;
+			  EX_SW_OFF;
+			  if(bootButtons.btn1){
+				  bootButtons.bootMode= RECOVERY;
+			  }
+			  else if(bootButtons.btn2){
+				  bootButtons.bootMode= MASS_STORAGE;
+			  }
+			  else if(bootButtons.btn3){
+				  bootButtons.bootMode= UEFI;
+			  }
+			  else if(bootButtons.edl_sw){
+				  bootButtons.bootMode= EDL;
+			  }
+			  else{
+				  bootButtons.bootMode=STANDARD;
+			  }
+			  bootButtons.btn0=0;
+			  bootButtons.btn1=0;
+			  bootButtons.btn2=0;
+			  bootButtons.btn3=0;
+			  bootButtons.btn4=0;
+			  bootButtons.btn5=0;
+			  bootButtons.edl_sw=0;
+			  bootButtons.ex_sw=0;
+			  bootButtons.modeClear=1;
+			  bootButtons.bootModeSet=0;
 
+		  }
+		  else{
+			  if((bootButtons.btn0) || pwrBtnReady){ //power button
+				  BTN0_ON;
+				  timeTurnedOn = (HAL_GetTick());
+				  pwrBtnReady=0;
+				  pwrOn = 1;
+				  osDelay(500);
+				  BTN0_OFF;
+				  osDelay(500);
+				  pwrOn=0;
+				  timeTurnedOn=0;
+				  if(bootButtons.btn0){
+					  bootButtons.bootMode= STANDARD;
+				  }
+				  else if(bootButtons.btn1){
+					  bootButtons.bootMode= RECOVERY;
+				  }
+				  else if(bootButtons.btn2){
+					  bootButtons.bootMode= MASS_STORAGE;
+				  }
+				  else if(bootButtons.btn3){
+					  bootButtons.bootMode= UEFI;
+				  }
+				  else if(bootButtons.edl_sw){
+					  bootButtons.bootMode= EDL;
+				  }
+				  bootButtons.btn0=0;
+				  bootButtons.btn1=0;
+				  bootButtons.btn2=0;
+				  bootButtons.btn3=0;
+				  bootButtons.btn4=0;
+				  bootButtons.btn5=0;
+				  bootButtons.edl_sw=0;
+				  bootButtons.ex_sw=0;
+				  bootButtons.modeClear=1;
+				  bootButtons.bootModeSet=0;
+				  //osDelay(300);
+			  }
+			  if(bootButtons.btn1){ //DPAD UP
+				  BTN1_ON;
+				  pwrBtnReady=1;
+			  }
+			  else if(!(bootButtons.btn1)){ //DPAD UP
+				  BTN1_OFF;
+				  //osDelay(300);
+			  }
+			  if(bootButtons.btn2){ //DPAD RIGHT
+				  BTN2_ON;
+				  pwrBtnReady=1;
+			  }
+			  else if(!(bootButtons.btn2)){ //DPAD RIGHT
+				  BTN2_OFF;
+				  //osDelay(300);
+			  }
+			  if(bootButtons.btn3){ //DPAD LEFT
+				  BTN3_ON;
+				  pwrBtnReady=1;
+			  }
+			  else if(!(bootButtons.btn3)){ //DPAD LEFT
+				  BTN3_OFF;
+				  //osDelay(300);
+			  }
+			  if(bootButtons.btn4){
+				  BTN4_ON;
+				  pwrBtnReady=1;
+			  }
+			  else if(!(bootButtons.btn4)){
+				  BTN4_OFF;
+				  osDelay(300);
+			  }
+			  if(bootButtons.btn5){
+				  BTN5_ON;
+				  pwrBtnReady=1;
+			  }
+			  else if(!(bootButtons.btn5)){
+				  BTN5_OFF;
+				  //osDelay(300);
+			  }
+			  if(bootButtons.edl_sw){
+				  EDL_SW_ON;
+				  pwrBtnReady=1;
+			  }
+			  else if(!(bootButtons.edl_sw)){
+				  EDL_SW_OFF;
+				  //osDelay(300);
+			  }
+			  if(bootButtons.ex_sw){
+				  EX_SW_ON;
+				  pwrBtnReady=1;
+			  }
+			  else if(!(bootButtons.ex_sw)){
+				  EX_SW_OFF;
+				  //osDelay(300);
+			  }
+		  }
+	  }
     osDelay(800);
   }
   /* USER CODE END startBootButtons */

@@ -75,6 +75,8 @@ static struct buttonPriority{
 	int sel;
 };
 struct buttonPriority buttonPriority = {1,2,3,4};
+
+int timestamp=0;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -181,13 +183,15 @@ void DebugMon_Handler(void)
 void EXTI4_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_IRQn 0 */
-
+	int currentTicks = HAL_GetTick();
+	int currentDiff = currentTicks-timestamp;
   /* USER CODE END EXTI4_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
   /* USER CODE BEGIN EXTI4_IRQn 1 */
-  if(inputButtonSet>buttonPriority.back){
+  if((inputButtonSet>buttonPriority.back) && (currentDiff>50)){
 	  inputButtonSet = buttonPriority.back;
   }
+  timestamp = HAL_GetTick();
   /* USER CODE END EXTI4_IRQn 1 */
 }
 
@@ -228,20 +232,22 @@ void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
 	uint8_t buttonStates[3];
+	int currentTicks = HAL_GetTick();
+	int currentDiff = currentTicks-timestamp;
 	buttonStates[0] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_5);
 	buttonStates[1] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_6);
 	buttonStates[2] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_7);
-	if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_5)){ //up button
+	if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_5) && (currentDiff>50)){ //up button
 		if(inputButtonSet > buttonPriority.up){
 			inputButtonSet = buttonPriority.up;
 		}
 	}
-	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_6)){ //sel button
+	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_6) && (currentDiff>50)){ //sel button
 		if(inputButtonSet > buttonPriority.sel){
 			inputButtonSet = buttonPriority.sel;
 		}
 	}
-	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_7)){ //down button
+	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_7) && (currentDiff>50)){ //down button
 		if(inputButtonSet > buttonPriority.down){
 			inputButtonSet = buttonPriority.down;
 		}
@@ -251,6 +257,7 @@ void EXTI9_5_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+  timestamp = HAL_GetTick();
   /* USER CODE END EXTI9_5_IRQn 1 */
 }
 

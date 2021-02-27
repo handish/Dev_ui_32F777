@@ -311,6 +311,15 @@ void Error_Handler(void);
 #define	STATUS_MENU			3
 #define	SYSTEM_INFO_MENU	4
 
+#define UNINITIALIZED		0
+#define STANDARD			1
+#define UEFI				2
+#define EDL					3
+#define RECOVERY			4
+#define MASS_STORAGE		5
+#define UNINITIALIZED		0
+
+
 #define NO_BTN_PRESS		5
 
 #define COMA				0
@@ -334,14 +343,17 @@ struct LED{
 static struct LED LED = {0x60 << 1, 0x00, 0x14, 0x15, 0x16, 0x17, 0x1C,0x11,0x09,0x0A,0x0B, 0x08,1};
 
 struct bootModeButtons{
-	int btn0;
-	int btn1;
-	int btn2;
-	int btn3;
+	int bootModeSet; //tells the boot button task to get working
+	int btn0; //PWR BTN
+	int btn1; //DPAD UP
+	int btn2; //DPAD RIGHT
+	int btn3; //DPAD LEFT
 	int btn4;
 	int btn5;
 	int edl_sw;
 	int ex_sw;
+	int modeClear; //Tells the display menu to keep going
+	int bootMode; // tells the display method what to draw.
 };
 
 struct zion{

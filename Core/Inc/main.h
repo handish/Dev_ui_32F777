@@ -53,7 +53,8 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
+#define true	1
+#define	false	0
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -67,7 +68,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+int writeI2CRegister(uint8_t address, uint8_t reg, uint8_t * bytes, int numBytes, int i2CBank);
+void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_param1, uint8_t err_param2, uint8_t critical_fault);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -342,6 +344,9 @@ void Error_Handler(void);
 #define FAULT7				6
 #define FAULT8				10
 #define FAULT9				11
+
+// Thresholds for FAULTS
+#define VSYS_FLT			3.5
 
 struct errorLEDs{
 	int zionFault;

@@ -11,10 +11,15 @@ float displayAdcValues[21];
 int setIndicator=0;
 
 void initializeDisplay(){
+	HAL_StatusTypeDef Status = HAL_OK;
 	SMLCD_InitGPIO();
 	SMLCD_Init(hspi4);
 	SMLCD_Enable();
 	SMLCD_Clear();
+	if (Status != HAL_OK)
+	{
+		DevUI_Error_Handler("SPI LCD Clear Command Failed.", Status, 0, 0, true);
+	}
 #define ORI 0
 	uint8_t ori;
 	if (ORI == 0){
@@ -559,7 +564,7 @@ void drawStatusMenu(int indicator){
 		j+=25;
 		i+= LCD_PutStr(i, j, "SOC I2C: ", fnt7x10);
 		i2cCheck=writeI2CRegister(socI2cVoltageMux.address, 0x11, 0x00,1,socI2cVoltageMux.i2cBank);
-		if(i2cCheck){
+		if(i2cCheck == HAL_OK){
 			LCD_PutStr(i, j, "Present", fnt7x10);
 		}
 		else{

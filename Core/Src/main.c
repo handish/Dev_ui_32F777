@@ -190,7 +190,6 @@ void startBootButtons(void *argument);
 void uartTransmitChar(char *message,int uart);
 void uartTransmitInt(uint16_t *number, int uart);
 uint8_t * readI2CRegister(uint8_t address, uint8_t reg, int bytes, int i2CBank);
-int writeI2CRegister(uint8_t address, uint8_t reg, uint8_t * bytes, int numBytes, int i2CBank);
 void setErrorLED(int led, _Bool change);
 void configureLEDDriver();
 float* getADCValues();
@@ -199,7 +198,6 @@ uint8_t *getInputGPIOState(void);
 void setOutputGPIOState(int gpio, int state);
 void outputGPIOBufInitialization();
 void setVoltageMux(int comChannel, int voltageChannel, int clear);
-void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_param1, uint8_t err_param2);
 //void LCD_DrawSomeLinesSingleLine();
 //void LCD_DrawSomeLinesBatchLine();
 //void LCD_BlackWhite(int color);
@@ -266,17 +264,17 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
   if (Status != HAL_OK)
   {
-  	  DevUI_Error_Handler("ADC1 Failed to start.", Status, 0, 0);
+  	  DevUI_Error_Handler("ADC1 Failed to start.", Status, 0, 0, true);
   }
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
   if (Status != HAL_OK)
   {
-  	  DevUI_Error_Handler("ADC2 Failed to start.", Status, 0, 0);
+  	  DevUI_Error_Handler("ADC2 Failed to start.", Status, 0, 0, true);
   }
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
   if (Status != HAL_OK)
   {
-  	  DevUI_Error_Handler("ADC3 Failed to start.", Status, 0, 0);
+  	  DevUI_Error_Handler("ADC3 Failed to start.", Status, 0, 0, true);
   }
    int x=1;
 
@@ -1654,7 +1652,7 @@ uint8_t * readI2CRegister(uint8_t address, uint8_t reg, int bytes, int i2CBank){
   		err_msg = "Failed I2C Read (Transmit) bank 4.";
   	}
 	  if ( ret != HAL_OK ) {
-		  	  DevUI_Error_Handler(err_msg, ret, address, reg);
+		  	  DevUI_Error_Handler(err_msg, ret, address, reg, false);
 	          return (uint8_t*)0xfe;
 	        }
 	  else {
@@ -1675,7 +1673,7 @@ uint8_t * readI2CRegister(uint8_t address, uint8_t reg, int bytes, int i2CBank){
 				err_msg = "Failed I2C Read (Receive) bank 4.";
 			}
 		  if ( ret != HAL_OK ) {
-			  	  DevUI_Error_Handler(err_msg, ret, address, reg);
+			  	  DevUI_Error_Handler(err_msg, ret, address, reg, false);
 		          return (uint8_t*)0xfe;
 		        }
 		  else{
@@ -1711,11 +1709,11 @@ int writeI2CRegister(uint8_t address, uint8_t reg, uint8_t * bytes, int numBytes
   	}
   	if (ret != HAL_OK)
   	{
-  		DevUI_Error_Handler(err_msg, ret, address, reg);
-  		return 0;
+  		DevUI_Error_Handler(err_msg, ret, address, reg, false);
+  		return ret;
   	}
   	else
-  		return 1;
+  		return HAL_OK;
 }
 void configureLEDDriver(){
 	uint8_t currentMultiplier = 0b00000001;
@@ -2323,65 +2321,61 @@ void startErrorLEDs(void *argument)
 	  if(adcRestart[0] && adcRestart[1] && adcRestart[2]){
 		  presentADCValues = getADCValues();
 	  }
-	  if(*(presentADCValues+Adc.adc0) > 3.5){
-		  errorLED.vsysPMIFault=0;
+	  if(*(presentADCValues+Adc.adc0) > VSYS_FLT){
+		  errorLED.vsysPMIFault=false;
 	  }
 	  else{
-		  errorLED.vsysPMIFault=1;
+		  errorLED.vsysPMIFault=true;
 	  }
 	  if((!ZION.SOC_EEPROM_Detected && ZION.zionFinished) || (ZION.SOC_BoardFab <0)){
-		  errorLED.zionFault=1;
+		  errorLED.zionFault=true;
 	  }
 	  else{
-		  errorLED.zionFault=0;
+		  errorLED.zionFault=false;
 	  }
 	  i2cCheck=writeI2CRegister(LED.address, 0xf0, 0x00,1,LED.i2cBank);
 
-	  if(i2cCheck){
-		  errorLED.ledDriver=0;
-	  }
-	  else{
-		  errorLED.ledDriver=1;
-	  }
 	  //only allow the error led write commands if the led driver responds.
-	  if(errorLED.ledDriver){
+	  if(i2cCheck != HAL_OK){
+		  errorLED.ledDriver=true;
 		  setErrorLED(ZION_FAULT,errorLED.zionFault);
 		  osDelay(20);
 		  setErrorLED(VSYSPMI_FAULT, errorLED.vsysPMIFault);
 		  osDelay(20);
 		  switch(bootButtons.bootMode){
 				case UNINITIALIZED:
-					errorLED.standard_boot=0;
-					errorLED.uefi_boot=0;
-					errorLED.edl_boot=0;
+					errorLED.standard_boot=false;
+					errorLED.uefi_boot=false;
+					errorLED.edl_boot=false;
 					break;
 				case STANDARD:
-					errorLED.standard_boot=1;
-					errorLED.uefi_boot=0;
-					errorLED.edl_boot=0;
+					errorLED.standard_boot=true;
+					errorLED.uefi_boot=false;
+					errorLED.edl_boot=false;
 					break;
 				case UEFI:
-					errorLED.standard_boot=0;
-					errorLED.uefi_boot=1;
-					errorLED.edl_boot=0;
+					errorLED.standard_boot=false;
+					errorLED.uefi_boot=true;
+					errorLED.edl_boot=false;
 					break;
 				case EDL:
-					errorLED.standard_boot=0;
-					errorLED.uefi_boot=0;
-					errorLED.edl_boot=1;
+					errorLED.standard_boot=false;
+					errorLED.uefi_boot=false;
+					errorLED.edl_boot=true;
 					break;
 				case MASS_STORAGE:
-					errorLED.standard_boot=1;
-					errorLED.uefi_boot=0;
-					errorLED.edl_boot=1;
+					errorLED.standard_boot=true;
+					errorLED.uefi_boot=false;
+					errorLED.edl_boot=true;
 					break;
 				case RECOVERY:
-					errorLED.standard_boot=0;
-					errorLED.uefi_boot=1;
-					errorLED.edl_boot=1;
+					errorLED.standard_boot=false;
+					errorLED.uefi_boot=true;
+					errorLED.edl_boot=true;
 					break;
 				}
 		  setErrorLED(STANDARD_LED,errorLED.standard_boot);
+		  printf("errorLED: %d\r\n", errorLED.standard_boot);
 		  osDelay(20);
 		  setErrorLED(UEFI_LED,errorLED.uefi_boot);
 		  osDelay(20);
@@ -2401,6 +2395,8 @@ void startErrorLEDs(void *argument)
 		  osDelay(20);
 		  setErrorLED(FAULT9,errorLED.fault9);
 	  }
+	  else
+		  errorLED.ledDriver = false;
 
     osDelay(500);
   }
@@ -2743,16 +2739,31 @@ void Error_Handler(void)
 // char *msg is an error message that can be sent to the handler from the caller.
 // err_param1 & err_param2 are additional error parameters that can be printed.
 // For I2C errors, I2C device address in param1 and register address in param2.
-void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_param1, uint8_t err_param2)
+void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_param1, uint8_t err_param2, uint8_t critical_fault)
 {
 	__disable_irq();
 	printf("ERROR: %s" " Code: %d Param1: 0x%x Param2: 0x%x\r\n", msg, ErrorCode, err_param1, err_param2);
-	__enable_irq();
-	return;
-//	  while (1)
-//	  {
-//		  // HAL error occurred, sit here.  Do not continue to run OS.
-//	  }
+
+	// Set error LED
+	//setErrorLED(FAULT9, true);
+
+	// Use event group flag to indicate an error for the startErrorLED task.
+
+	// If the fault is labeled as "critical" stay here.  Else keep running RTOS.
+	if (critical_fault == true)
+	{
+	  while (1)
+	  {
+		  // HAL error occurred, sit here.  Do not continue to run OS.
+	  }
+	}
+	else
+	{
+		__enable_irq();
+		return;
+	}
+
+
 }
 
 #ifdef  USE_FULL_ASSERT

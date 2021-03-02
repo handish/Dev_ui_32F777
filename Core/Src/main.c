@@ -199,6 +199,7 @@ uint8_t *getInputGPIOState(void);
 void setOutputGPIOState(int gpio, int state);
 void outputGPIOBufInitialization();
 void setVoltageMux(int comChannel, int voltageChannel, int clear);
+void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_param1, uint8_t err_param2);
 //void LCD_DrawSomeLinesSingleLine();
 //void LCD_DrawSomeLinesBatchLine();
 //void LCD_BlackWhite(int color);
@@ -218,6 +219,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
  //static _Bool ON = 1;
  //static _Bool OFF = 0;
+  HAL_StatusTypeDef Status = HAL_OK;
 
 
   /* USER CODE END 1 */
@@ -262,8 +264,20 @@ int main(void)
   outputGPIOBufInitialization();
   memset(errorLEDState,0,sizeof(errorLEDState));
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
+  if (Status != HAL_OK)
+  {
+  	  DevUI_Error_Handler("ADC1 Failed to start.", Status, 0, 0);
+  }
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
+  if (Status != HAL_OK)
+  {
+  	  DevUI_Error_Handler("ADC2 Failed to start.", Status, 0, 0);
+  }
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
+  if (Status != HAL_OK)
+  {
+  	  DevUI_Error_Handler("ADC3 Failed to start.", Status, 0, 0);
+  }
    int x=1;
 
 
@@ -1622,35 +1636,46 @@ uint8_t * readI2CRegister(uint8_t address, uint8_t reg, int bytes, int i2CBank){
 	static uint8_t buf[20];
 	HAL_StatusTypeDef ret;
 	buf[0]=reg;
+	char *err_msg;
   	if(i2CBank == 1){
   		ret = HAL_I2C_Master_Transmit(&hi2c1, address, buf, 1, HAL_MAX_DELAY);
+  		err_msg = "Failed I2C Read (Transmit) bank 1.";
   	}
   	else if(i2CBank == 2){
   		ret = HAL_I2C_Master_Transmit(&hi2c2, address, buf, 1, HAL_MAX_DELAY);
+  		err_msg = "Failed I2C Read (Transmit) bank 2.";
   	}
   	else if(i2CBank == 3){
   		ret = HAL_I2C_Master_Transmit(&hi2c3, address, buf, 1, HAL_MAX_DELAY);
+  		err_msg = "Failed I2C Read (Transmit) bank 3.";
   	}
   	else if(i2CBank == 4){
   		ret = HAL_I2C_Master_Transmit(&hi2c4, address, buf, 1, HAL_MAX_DELAY);
+  		err_msg = "Failed I2C Read (Transmit) bank 4.";
   	}
 	  if ( ret != HAL_OK ) {
+		  	  DevUI_Error_Handler(err_msg, ret, address, reg);
 	          return (uint8_t*)0xfe;
 	        }
 	  else {
 		  if(i2CBank == 1){
 				ret = HAL_I2C_Master_Receive(&hi2c1, address, buf, bytes, HAL_MAX_DELAY);
+				err_msg = "Failed I2C Read (Receive) bank 1.";
 			}
 			else if(i2CBank == 2){
 				ret = HAL_I2C_Master_Receive(&hi2c2, address, buf, bytes, HAL_MAX_DELAY);
+				err_msg = "Failed I2C Read (Receive) bank 2.";
 			}
 			else if(i2CBank == 3){
 				ret = HAL_I2C_Master_Receive(&hi2c3, address, buf, bytes, HAL_MAX_DELAY);
+				err_msg = "Failed I2C Read (Receive) bank 3.";
 			}
 			else if(i2CBank == 4){
 				ret = HAL_I2C_Master_Receive(&hi2c4, address, buf, bytes, HAL_MAX_DELAY);
+				err_msg = "Failed I2C Read (Receive) bank 4.";
 			}
 		  if ( ret != HAL_OK ) {
+			  	  DevUI_Error_Handler(err_msg, ret, address, reg);
 		          return (uint8_t*)0xfe;
 		        }
 		  else{
@@ -1660,31 +1685,37 @@ uint8_t * readI2CRegister(uint8_t address, uint8_t reg, int bytes, int i2CBank){
 }
 }
 int writeI2CRegister(uint8_t address, uint8_t reg, uint8_t * bytes, int numBytes, int i2CBank){
-	  	uint8_t buf[20];
-	  	HAL_StatusTypeDef ret;
-	  	buf[0]=reg;
-	  	int x = 0;
-	  	for (x=0;x<(sizeof(bytes)-1);x++){
-	  		buf[1+x] = bytes[x];
-	  	}
-	  	if(i2CBank == 1){
-	  		ret = HAL_I2C_Master_Transmit(&hi2c1, address, buf, numBytes+1, HAL_MAX_DELAY);
-	  	}
-	  	else if(i2CBank == 2){
-	  		ret = HAL_I2C_Master_Transmit(&hi2c2, address, buf, numBytes+1, HAL_MAX_DELAY);
-	  	}
-	  	else if(i2CBank == 3){
-	  		ret = HAL_I2C_Master_Transmit(&hi2c3, address, buf, numBytes+1, HAL_MAX_DELAY);
-	  	}
-	  	else if(i2CBank == 4){
-	  		ret = HAL_I2C_Master_Transmit(&hi2c4, address, buf, numBytes+1, HAL_MAX_DELAY);
-	  	}
-	  	if ( ret != HAL_OK ) {
-	  	          return 0;
-	  	        }
-	  	else {
-	  		  return 1;
-	  }
+  	uint8_t buf[20];
+  	HAL_StatusTypeDef ret;
+  	buf[0]=reg;
+  	int x = 0;
+  	char *err_msg;
+  	for (x=0;x<(sizeof(bytes)-1);x++){
+  		buf[1+x] = bytes[x];
+  	}
+  	if(i2CBank == 1){
+  		ret = HAL_I2C_Master_Transmit(&hi2c1, address, buf, numBytes+1, HAL_MAX_DELAY);
+  		err_msg = "Failed I2C write bank 1.";
+  	}
+  	else if(i2CBank == 2){
+  		ret = HAL_I2C_Master_Transmit(&hi2c2, address, buf, numBytes+1, HAL_MAX_DELAY);
+  		err_msg = "Failed I2C write bank 2.";
+  	}
+  	else if(i2CBank == 3){
+  		ret = HAL_I2C_Master_Transmit(&hi2c3, address, buf, numBytes+1, HAL_MAX_DELAY);
+  		err_msg = "Failed I2C write bank 3.";
+  	}
+  	else if(i2CBank == 4){
+  		ret = HAL_I2C_Master_Transmit(&hi2c4, address, buf, numBytes+1, HAL_MAX_DELAY);
+  		err_msg = "Failed I2C write bank 4.";
+  	}
+  	if (ret != HAL_OK)
+  	{
+  		DevUI_Error_Handler(err_msg, ret, address, reg);
+  		return 0;
+  	}
+  	else
+  		return 1;
 }
 void configureLEDDriver(){
 	uint8_t currentMultiplier = 0b00000001;
@@ -2706,6 +2737,22 @@ void Error_Handler(void)
   {
   }
   /* USER CODE END Error_Handler_Debug */
+}
+
+// Generic Error Handler for DevUI HAL hardware.
+// char *msg is an error message that can be sent to the handler from the caller.
+// err_param1 & err_param2 are additional error parameters that can be printed.
+// For I2C errors, I2C device address in param1 and register address in param2.
+void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_param1, uint8_t err_param2)
+{
+	__disable_irq();
+	printf("ERROR: %s" " Code: %d Param1: 0x%x Param2: 0x%x\r\n", msg, ErrorCode, err_param1, err_param2);
+	__enable_irq();
+	return;
+//	  while (1)
+//	  {
+//		  // HAL error occurred, sit here.  Do not continue to run OS.
+//	  }
 }
 
 #ifdef  USE_FULL_ASSERT

@@ -37,34 +37,59 @@ void drawMainMenu(int indicator){
 	// RTC :)
 	i  = 10;
 	j  = 10;
-	i += LCD_PutStr(i, j, "FAULTS:", fnt7x10);
-	i += LCD_PutStr(i, j, "So many!", fnt7x10);
-	i+=20;
+	printFaults(i,j);
+	//i += LCD_PutStr(i, j, "FAULTS:", fnt7x10);
+	//i += LCD_PutStr(i, j, "So many!", fnt7x10);
+	i=150;
 	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
 	if(displayAdcValues[Adc.adc0] >3.5){
+		//errorLED.vsysPMIFault=0;
 		switch(bootButtons.bootMode){
 		case UNINITIALIZED:
 			LCD_PutStr(i, j, "OFF", fnt7x10);
+			//errorLED.standard_boot = 0;
+			//errorLED.uefi_boot  = 0;
+			//errorLED.edl_boot  = 0;
 			break;
 		case STANDARD:
 			LCD_PutStr(i, j, "OS", fnt7x10);
+			//errorLED.standard_boot = 1;
+			//errorLED.uefi_boot  = 0;
+			//errorLED.edl_boot  = 0;
 			break;
 		case UEFI:
 			LCD_PutStr(i, j, "UEFI", fnt7x10);
+			//errorLED.standard_boot = 0;
+			//errorLED.uefi_boot  = 1;
+			//errorLED.edl_boot  = 0;
 			break;
 		case EDL:
 			LCD_PutStr(i, j, "EDL", fnt7x10);
+			//errorLED.standard_boot = 0;
+			//errorLED.uefi_boot  = 0;
+			//errorLED.edl_boot  = 1;
 			break;
 		case MASS_STORAGE:
 			LCD_PutStr(i, j, "MASS", fnt7x10);
+			//errorLED.standard_boot = 1;
+			//errorLED.uefi_boot  = 1;
+			//errorLED.edl_boot  = 0;
 			break;
 		case RECOVERY:
 			LCD_PutStr(i, j, "FFU", fnt7x10);
+			//errorLED.standard_boot = 0;
+			//errorLED.uefi_boot  = 1;
+			//errorLED.edl_boot  = 1;
 			break;
 		}
 	}
 	else{
 		LCD_PutStr(i, j, "OFF", fnt7x10);
+		//errorLED.vsysPMIFault=1;
+		//errorLED.standard_boot = 0;
+		//errorLED.uefi_boot  = 0;
+		//errorLED.edl_boot  = 0;
+
 	}
 	i  = 135;
 	j += 14;
@@ -75,53 +100,53 @@ void drawMainMenu(int indicator){
 	// Vertical divider
 	LCD_FillRect(i + 5, 2, i + 8, j);
 	LCD_FillRect(scr_width-97, 2, scr_width-94,scr_height-1);
-	i  = scr_width-80;
+	i  = scr_width-90;
 	j  = 3;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
-	LCD_PutStr(i, j, "FAULT1 LED", fnt7x10);
+	LCD_PutStr(i, j, "ZION FLT", fnt7x10);
 	j+=22;
-	i  = scr_width-80;
+	i  = scr_width-90;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
-	LCD_PutStr(i, j, "FAULT2 LED", fnt7x10);
-	i  = scr_width-80;
+	LCD_PutStr(i, j, "VSYS FLT", fnt7x10);
+	i  = scr_width-90;
 	j  += 22;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
-	LCD_PutStr(i, j, "FAULT3 LED", fnt7x10);
+	LCD_PutStr(i, j, "FAULT3", fnt7x10);
 	j+=22;
-	i  = scr_width-80;
+	i  = scr_width-90;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
-	LCD_PutStr(i, j, "FAULT4 LED", fnt7x10);
-	i  = scr_width-80;
+	LCD_PutStr(i, j, "FAULT4", fnt7x10);
+	i  = scr_width-90;
 	j  += 22;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
-	LCD_PutStr(i, j, "FAULT5 LED", fnt7x10);
+	LCD_PutStr(i, j, "FAULT5", fnt7x10);
 	j+=22;
-	i  = scr_width-80;
+	i  = scr_width-90;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
-	LCD_PutStr(i, j, "FAULT6 LED", fnt7x10);
-	i  = scr_width-80;
+	LCD_PutStr(i, j, "FAULT6", fnt7x10);
+	i  = scr_width-90;
 	j  +=22;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
-	LCD_PutStr(i, j, "FAULT7 LED", fnt7x10);
+	LCD_PutStr(i, j, "FAULT7", fnt7x10);
 	j+=22;
-	i  = scr_width-80;
+	i  = scr_width-90;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
-	LCD_PutStr(i, j, "FAULT8 LED", fnt7x10);
-	i  = scr_width-80;
+	LCD_PutStr(i, j, "FAULT8", fnt7x10);
+	i  = scr_width-90;
 	j  +=22;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
-	LCD_PutStr(i, j, "FAULT9 LED", fnt7x10);
+	LCD_PutStr(i, j, "FAULT9", fnt7x10);
 	j = scr_height-20;
-	i  = scr_width-80;
+	i  = scr_width-90;
 	LCD_FillRect(i, j - 2, i + 12, j + 8);
 	i+=20;
 	LCD_PutStr(i, j, "MODE", fnt7x10);
@@ -223,8 +248,14 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j=95;
-		i+= LCD_PutStr(i, j, "Fault0: ", fnt7x10);
-		LCD_PutStr(i, j, "placeholder", fnt7x10);
+
+		i+= LCD_PutStr(i, j, "ZION FLT: ", fnt7x10);
+		if(errorLED.zionFault){
+			LCD_PutStr(i, j, "SOC ZION ERROR", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Clear", fnt7x10);
+		}
 		i=daughterCardAlignment;
 		i+= LCD_PutStr(i, j, "SOC: ", fnt7x10);
 		if(ZION.SOC_EEPROM_Detected){
@@ -233,11 +264,15 @@ void drawStatusMenu(int indicator){
 		else{
 			LCD_PutStr(i,j,"Undetected", fnt7x10);
 		}
-
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault1: ", fnt7x10);
-		LCD_PutStr(i, j, "placeholder", fnt7x10);
+		i+= LCD_PutStr(i, j, "VSYS_PMI: ", fnt7x10);
+		if(errorLED.vsysPMIFault){
+			LCD_PutStr(i, j, "VSYS PMI LOW", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Clear", fnt7x10);
+		}
 		i=daughterCardAlignment;
 		i+= LCD_PutStr(i, j, "ASIC: ", fnt7x10);
 		if(ZION.ASIC_EEPROM_Detected){
@@ -248,8 +283,13 @@ void drawStatusMenu(int indicator){
 		}
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault2: ", fnt7x10);
-		LCD_PutStr(i, j, "placeholder", fnt7x10);
+		i+= LCD_PutStr(i, j, "Fault3: ", fnt7x10);
+		if(errorLED.fault3){
+			LCD_PutStr(i, j, "FAULT 3 Triggered", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Clear", fnt7x10);
+		}
 		i=daughterCardAlignment;
 		i+= LCD_PutStr(i, j, "Display: ", fnt7x10);
 		if(ZION.DISPLAY_EEPROM_Detected){
@@ -261,33 +301,63 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault3: ", fnt7x10);
-		LCD_PutStr(i, j, "placeholder", fnt7x10);
-
-		i=10;
-		j+=15;
 		i+= LCD_PutStr(i, j, "Fault4: ", fnt7x10);
-		LCD_PutStr(i, j, "placeholder", fnt7x10);
+		if(errorLED.fault4){
+			LCD_PutStr(i, j, "FAULT 4 Triggered", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Clear", fnt7x10);
+		}
 
 		i=10;
 		j+=15;
 		i+= LCD_PutStr(i, j, "Fault5: ", fnt7x10);
-		LCD_PutStr(i, j, "placeholder", fnt7x10);
+		if(errorLED.fault5){
+			LCD_PutStr(i, j, "FAULT 5 Triggered", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Clear", fnt7x10);
+		}
 
 		i=10;
 		j+=15;
 		i+= LCD_PutStr(i, j, "Fault6: ", fnt7x10);
-		LCD_PutStr(i, j, "placeholder", fnt7x10);
+		if(errorLED.fault6){
+			LCD_PutStr(i, j, "FAULT 6 Triggered", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Clear", fnt7x10);
+		}
 
 		i=10;
 		j+=15;
 		i+= LCD_PutStr(i, j, "Fault7: ", fnt7x10);
-		LCD_PutStr(i, j, "placeholder", fnt7x10);
+		if(errorLED.fault7){
+			LCD_PutStr(i, j, "FAULT 7 Triggered", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Clear", fnt7x10);
+		}
 
 		i=10;
 		j+=15;
 		i+= LCD_PutStr(i, j, "Fault8: ", fnt7x10);
-		LCD_PutStr(i, j, "placeholder", fnt7x10);
+		if(errorLED.fault8){
+			LCD_PutStr(i, j, "FAULT 8 Triggered", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Clear", fnt7x10);
+		}
+
+		i=10;
+		j+=15;
+		i+= LCD_PutStr(i, j, "Fault9: ", fnt7x10);
+		if(errorLED.fault9){
+			LCD_PutStr(i, j, "FAULT 9 Triggered", fnt7x10);
+		}
+		else{
+			LCD_PutStr(i, j, "Clear", fnt7x10);
+		}
 
 
 		//horizontal divider
@@ -473,10 +543,7 @@ void drawStatusMenu(int indicator){
 		i=40;
 		j+=25;
 		i+= LCD_PutStr(i, j, "LED Driver: ", fnt7x10);
-		//ping the LED Driver
-		i2cCheck=writeI2CRegister(LED.address, 0xf0, 0x00,1,LED.i2cBank);
-
-		if(i2cCheck){
+		if(!(errorLED.ledDriver)){
 			LCD_PutStr(i, j, "Present", fnt7x10);
 		}
 		else{
@@ -1120,9 +1187,8 @@ void drawMenuHeader(){
 	// RTC :)
 	i  = 10;
 	j  = 10;
-	i += LCD_PutStr(i, j, "FAULTS:", fnt7x10);
-	i += LCD_PutStr(i, j, "So many!", fnt7x10);
-	i+=170;
+	printFaults(i,j);
+	i=275;
 	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
 	if(displayAdcValues[Adc.adc0] >3.5){
 		switch(bootButtons.bootMode){
@@ -1166,4 +1232,44 @@ void getLatestADC(){
 	  		  adcValuePointer++;
 		  }
 	 }
+}
+//print only the critical faults. Order is VSYS_PMI, ZION, FAULT3-9
+int printFaults(int i, int j){
+	int x = i;
+	int y = j;
+	x += LCD_PutStr(x, y, "FAULTS:", fnt7x10);
+	if(errorLED.vsysPMIFault){
+		x += LCD_PutStr(x, y, "VSYS", fnt7x10);
+	}
+	else if(errorLED.zionFault){
+		x += LCD_PutStr(x, y, "ZION", fnt7x10);
+	}
+	else if(errorLED.fault3){
+		x += LCD_PutStr(x, y, "FAULT3", fnt7x10);
+	}
+	else if(errorLED.fault4){
+		x += LCD_PutStr(x, y, "FAULT4", fnt7x10);
+	}
+	else if(errorLED.fault5){
+		x += LCD_PutStr(x, y, "FAULT5", fnt7x10);
+	}
+	else if(errorLED.fault6){
+		x += LCD_PutStr(x, y, "FAULT6", fnt7x10);
+	}
+	else if(errorLED.fault7){
+		x += LCD_PutStr(x, y, "FAULT7", fnt7x10);
+	}
+	else if(errorLED.fault8){
+		x += LCD_PutStr(x, y, "FAULT8", fnt7x10);
+	}
+	else if(errorLED.fault9){
+		x += LCD_PutStr(x, y, "FAULT9", fnt7x10);
+	}
+	else if(errorLED.ledDriver){
+		x += LCD_PutStr(x, y, "LED DVR", fnt7x10);
+	}
+	else{
+		x += LCD_PutStr(x, y, "NONE!", fnt7x10);
+	}
+	return x;
 }

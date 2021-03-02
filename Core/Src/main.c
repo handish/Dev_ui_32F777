@@ -107,8 +107,8 @@ const osThreadAttr_t navigationTask_attributes = {
 osThreadId_t errorLEDsHandle;
 const osThreadAttr_t errorLEDs_attributes = {
   .name = "errorLEDs",
-  .priority = (osPriority_t) osPriorityLow3,
-  .stack_size = 256 * 4
+  .priority = (osPriority_t) osPriorityLow5,
+  .stack_size = 1024 * 4
 };
 /* Definitions for zionRead */
 osThreadId_t zionReadHandle;
@@ -139,10 +139,12 @@ uint8_t errorLEDState[12];
 static uint32_t i, j, k;
 
 //zion status variables
-struct zion ZION = {0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+struct zion ZION = {0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 //boot mode variables
 struct bootModeButtons bootButtons = {0,0,0,0,0,0,0,0,0,0};
+
+struct errorLEDs errorLED = {0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 //int commandByte=1;
 //int lineByte=1;
@@ -267,9 +269,9 @@ int main(void)
 
 
   configureLEDDriver();
-    setErrorLED(4,OFF);
+    setErrorLED(0,ON);
     HAL_Delay(1000);
-    setErrorLED(7,OFF);
+    setErrorLED(1,OFF);
     setErrorLED(8,ON);
     HAL_Delay(1000);
     setErrorLED(8,OFF);
@@ -279,7 +281,6 @@ int main(void)
     setErrorLED(9,ON);
     HAL_Delay(1000);
     setErrorLED(9,OFF);
-
     BTN0_ON;
     HAL_Delay(300);
     BTN1_ON;
@@ -1634,7 +1635,7 @@ uint8_t * readI2CRegister(uint8_t address, uint8_t reg, int bytes, int i2CBank){
   		ret = HAL_I2C_Master_Transmit(&hi2c4, address, buf, 1, HAL_MAX_DELAY);
   	}
 	  if ( ret != HAL_OK ) {
-	          return 0xfe;
+	          return (uint8_t*)0xfe;
 	        }
 	  else {
 		  if(i2CBank == 1){
@@ -1650,7 +1651,7 @@ uint8_t * readI2CRegister(uint8_t address, uint8_t reg, int bytes, int i2CBank){
 				ret = HAL_I2C_Master_Receive(&hi2c4, address, buf, bytes, HAL_MAX_DELAY);
 			}
 		  if ( ret != HAL_OK ) {
-		          return 0xfe;
+		          return (uint8_t*)0xfe;
 		        }
 		  else{
 			  uartTransmitInt(buf[0],7);
@@ -1691,20 +1692,20 @@ void configureLEDDriver(){
 	clear[0]=0x0;
 	uint8_t * buf;
 	//reduce the current multiplier to set brightness lower. See if this works. If not, we can work with PWM.
-	writeI2CRegister(LED.address, LED.iref_reg, currentMultiplier,1,LED.i2cBank);
+	writeI2CRegister(LED.address, LED.iref_reg, (uint8_t*)currentMultiplier,1,LED.i2cBank);
 	buf = readI2CRegister(LED.address,LED.iref_reg,1,LED.i2cBank);
 	uartTransmitInt(buf[0],7);
 	//Turn on oscillator. Must be turned on before LED driver functions
-	writeI2CRegister(LED.address,LED.mode0_reg,LED.mode0_oscon_value,1,LED.i2cBank);
+	writeI2CRegister(LED.address,LED.mode0_reg,(uint8_t*)LED.mode0_oscon_value,1,LED.i2cBank);
 	//clear the default state of the led register.
-	writeI2CRegister(LED.address,LED.led0_reg,clear,1,LED.i2cBank);
-	writeI2CRegister(LED.address,LED.led1_reg,clear,1,LED.i2cBank);
-	writeI2CRegister(LED.address,LED.led2_reg,clear,1,LED.i2cBank);
-	writeI2CRegister(LED.address,LED.led3_reg,clear,1,LED.i2cBank);
+	writeI2CRegister(LED.address,LED.led0_reg,(uint8_t*)clear,1,LED.i2cBank);
+	writeI2CRegister(LED.address,LED.led1_reg,(uint8_t*)clear,1,LED.i2cBank);
+	writeI2CRegister(LED.address,LED.led2_reg,(uint8_t*)clear,1,LED.i2cBank);
+	writeI2CRegister(LED.address,LED.led3_reg,(uint8_t*)clear,1,LED.i2cBank);
 	//set the PWM for the tri-color led. Thing is bright so PWM is very low.
-	writeI2CRegister(LED.address,LED.led7_pwm,LED.pwm,1,LED.i2cBank);
-	writeI2CRegister(LED.address,LED.led8_pwm,LED.pwm,1,LED.i2cBank);
-	writeI2CRegister(LED.address,LED.led9_pwm,LED.pwm,1,LED.i2cBank);
+	writeI2CRegister(LED.address,LED.led7_pwm,(uint8_t*)LED.pwm,1,LED.i2cBank);
+	writeI2CRegister(LED.address,LED.led8_pwm,(uint8_t*)LED.pwm,1,LED.i2cBank);
+	writeI2CRegister(LED.address,LED.led9_pwm,(uint8_t*)LED.pwm,1,LED.i2cBank);
 }
 
 //Configures specified LED to either fully on or off.
@@ -2020,22 +2021,18 @@ void GetDaScreenBlink(void *argument)
 {
   /* USER CODE BEGIN GetDaScreenBlink */
   /* Infinite loop */
-	 int x = 0;
-	 float *adcValues;
-	 HAL_StatusTypeDef ret;
+//	 int x = 0;
+//	 float *adcValues;
+//	 HAL_StatusTypeDef ret;
 	 initializeDisplay();
 	 uint32_t ulNotifiedValue;
 	 uint8_t button_val = 0;
 	 uint8_t menu_val = 0;
 	 uint8_t running_menu = 0;
-	 int *readI2c;
-	 int zionCleared=0;
+//	 int *readI2c;
+//	 int zionCleared=0;
 	   for(;;)
 	   {
-		if((ZION.zionFinished) && (!zionCleared)){
-				  //osThreadSuspend(zionReadHandle);
-				  zionCleared=1;
-		}
 	 	  ulNotifiedValue = 0;
 	 	  xTaskNotifyWait(NOTIFY_NOCLEAR, NOTIFY_CLEARALL, &ulNotifiedValue, portMAX_DELAY);
 	 	  // button press decode
@@ -2161,7 +2158,7 @@ void startNavigationTask(void *argument)
 	uint8_t prev_menu = menu_run;		// variable to track what the previous menu running was, this is used for the BACK button
 	uint8_t menu_Max_Items = MAX_MENU_ITEMS_MAIN_MENU;
 	uint8_t prev_menu_highlight = menu_highlight; //variable to track previous menu highlight
-	int zionCleared=0;
+//	int zionCleared=0;
 	//uint8_t button_press = 1;
 	// Clear button flags here
 
@@ -2288,14 +2285,93 @@ void startErrorLEDs(void *argument)
 {
   /* USER CODE BEGIN startErrorLEDs */
   /* Infinite loop */
-	int x;
+	int i2cCheck;
+	float * presentADCValues;
   for(;;)
   {
-	  for(x=0;x<12;x++){
-		  setErrorLED(x, errorLEDState[x]);
-		  HAL_Delay(10);
+	  if(adcRestart[0] && adcRestart[1] && adcRestart[2]){
+		  presentADCValues = getADCValues();
 	  }
-    osDelay(1000);
+	  if(*(presentADCValues+Adc.adc0) > 3.5){
+		  errorLED.vsysPMIFault=0;
+	  }
+	  else{
+		  errorLED.vsysPMIFault=1;
+	  }
+	  if((!ZION.SOC_EEPROM_Detected && ZION.zionFinished) || (ZION.SOC_BoardFab <0)){
+		  errorLED.zionFault=1;
+	  }
+	  else{
+		  errorLED.zionFault=0;
+	  }
+	  i2cCheck=writeI2CRegister(LED.address, 0xf0, 0x00,1,LED.i2cBank);
+
+	  if(i2cCheck){
+		  errorLED.ledDriver=0;
+	  }
+	  else{
+		  errorLED.ledDriver=1;
+	  }
+	  //only allow the error led write commands if the led driver responds.
+	  if(errorLED.ledDriver){
+		  setErrorLED(ZION_FAULT,errorLED.zionFault);
+		  osDelay(20);
+		  setErrorLED(VSYSPMI_FAULT, errorLED.vsysPMIFault);
+		  osDelay(20);
+		  switch(bootButtons.bootMode){
+				case UNINITIALIZED:
+					errorLED.standard_boot=0;
+					errorLED.uefi_boot=0;
+					errorLED.edl_boot=0;
+					break;
+				case STANDARD:
+					errorLED.standard_boot=1;
+					errorLED.uefi_boot=0;
+					errorLED.edl_boot=0;
+					break;
+				case UEFI:
+					errorLED.standard_boot=0;
+					errorLED.uefi_boot=1;
+					errorLED.edl_boot=0;
+					break;
+				case EDL:
+					errorLED.standard_boot=0;
+					errorLED.uefi_boot=0;
+					errorLED.edl_boot=1;
+					break;
+				case MASS_STORAGE:
+					errorLED.standard_boot=1;
+					errorLED.uefi_boot=0;
+					errorLED.edl_boot=1;
+					break;
+				case RECOVERY:
+					errorLED.standard_boot=0;
+					errorLED.uefi_boot=1;
+					errorLED.edl_boot=1;
+					break;
+				}
+		  setErrorLED(STANDARD_LED,errorLED.standard_boot);
+		  osDelay(20);
+		  setErrorLED(UEFI_LED,errorLED.uefi_boot);
+		  osDelay(20);
+		  setErrorLED(EDL_LED,errorLED.edl_boot);
+		  osDelay(20);
+		  setErrorLED(FAULT3,errorLED.fault3);
+		  osDelay(20);
+		  setErrorLED(FAULT4,errorLED.fault4);
+		  osDelay(20);
+		  setErrorLED(FAULT5,errorLED.fault5);
+		  osDelay(20);
+		  setErrorLED(FAULT6,errorLED.fault6);
+		  osDelay(20);
+		  setErrorLED(FAULT7,errorLED.fault7);
+		  osDelay(20);
+		  setErrorLED(FAULT8,errorLED.fault8);
+		  osDelay(20);
+		  setErrorLED(FAULT9,errorLED.fault9);
+	  }
+
+    osDelay(500);
   }
   /* USER CODE END startErrorLEDs */
 }
@@ -2336,6 +2412,7 @@ void startZionRead(void *argument)
 						  ZION.SOC_BoardFab = *(zionHeaderData+2);
 						  ZION.SOC_Config = *(zionHeaderData+3);
 					  }
+
 					  if(*(zionEEPROMPresent+1)){
 						  ZION.ASIC_EEPROM_Detected = 1;
 						  zionHeaderData = parseZionEEPROM(ASIC_ADDRESS);
@@ -2396,7 +2473,6 @@ void startZionRead(void *argument)
 		  osThreadExit();
 	  }
     osDelay(400);
-
   }
   /* USER CODE END startZionRead */
 }
@@ -2465,18 +2541,23 @@ void startBootButtons(void *argument)
 			  EX_SW_OFF;
 			  if(bootButtons.btn1){
 				  bootButtons.bootMode= RECOVERY;
+				  //errorLEDState[RECOVERY_LED]=1;
 			  }
 			  else if(bootButtons.btn2){
 				  bootButtons.bootMode= MASS_STORAGE;
+				 // errorLEDState[MASS_STORAGE_LED]=1;
 			  }
 			  else if(bootButtons.btn3){
 				  bootButtons.bootMode= UEFI;
+				  //errorLEDState[UEFI_LED]=1;
 			  }
 			  else if(bootButtons.edl_sw){
 				  bootButtons.bootMode= EDL;
+				  //errorLEDState[EDL_LED]=1;
 			  }
 			  else{
 				  bootButtons.bootMode=STANDARD;
+				  //errorLEDState[STANDARD_LED]=1;
 			  }
 			  bootButtons.btn0=0;
 			  bootButtons.btn1=0;

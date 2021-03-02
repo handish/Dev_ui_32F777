@@ -188,7 +188,7 @@ void EXTI4_IRQHandler(void)
   /* USER CODE END EXTI4_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
   /* USER CODE BEGIN EXTI4_IRQn 1 */
-  if((inputButtonSet>buttonPriority.back) && (currentDiff>50)){
+  if((inputButtonSet>buttonPriority.back) && (currentDiff>150)){
 	  inputButtonSet = buttonPriority.back;
   }
   timestamp = HAL_GetTick();
@@ -237,17 +237,17 @@ void EXTI9_5_IRQHandler(void)
 	buttonStates[0] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_5);
 	buttonStates[1] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_6);
 	buttonStates[2] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_7);
-	if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_5) && (currentDiff>50)){ //up button
+	if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_5) && (currentDiff>150)){ //up button
 		if(inputButtonSet > buttonPriority.up){
 			inputButtonSet = buttonPriority.up;
 		}
 	}
-	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_6) && (currentDiff>50)){ //sel button
+	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_6) && (currentDiff>150)){ //sel button
 		if(inputButtonSet > buttonPriority.sel){
 			inputButtonSet = buttonPriority.sel;
 		}
 	}
-	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_7) && (currentDiff>50)){ //down button
+	else if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_7) && (currentDiff>150)){ //down button
 		if(inputButtonSet > buttonPriority.down){
 			inputButtonSet = buttonPriority.down;
 		}

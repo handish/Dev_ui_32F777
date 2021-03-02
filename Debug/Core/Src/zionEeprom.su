@@ -4,3 +4,5 @@ zionEeprom.c:39:6:readDataFromEEPROM	40	static
 zionEeprom.c:42:6:clearEEPROM	72	static
 zionEeprom.c:53:6:writeZionBinaries	24	static
 zionEeprom.c:76:7:parseZionEEPROM	176	dynamic
+zionEeprom.c:201:6:writeDataToSpareEEPROM	56	static
+zionEeprom.c:215:6:readDataFromSpareEEPROM	40	static

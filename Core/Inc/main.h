@@ -317,13 +317,47 @@ void Error_Handler(void);
 #define EDL					3
 #define RECOVERY			4
 #define MASS_STORAGE		5
-#define UNINITIALIZED		0
 
 
 #define NO_BTN_PRESS		5
 
 #define COMA				0
 #define COMB				1
+
+//Fault LEDs
+#define ZION_FAULT 			0
+#define VSYSPMI_FAULT		1
+
+
+//MODE LEDs
+#define STANDARD_LED			7
+#define UEFI_LED				8
+#define EDL_LED					9
+
+//placeholder defines for other fault LEDs
+#define FAULT3				2
+#define FAULT4				3
+#define FAULT5				4
+#define FAULT6				5
+#define FAULT7				6
+#define FAULT8				10
+#define FAULT9				11
+
+struct errorLEDs{
+	int zionFault;
+	int vsysPMIFault;
+	int fault3;
+	int fault4;
+	int fault5;
+	int fault6;
+	int fault7;
+	int standard_boot;
+	int uefi_boot;
+	int edl_boot;
+	int fault8;
+	int fault9;
+	int ledDriver;
+};
 
 struct LED{
 	uint8_t address;

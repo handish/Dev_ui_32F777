@@ -26,7 +26,8 @@ extern uint8_t adcRestart[3];
 extern uint8_t gpioInputBuf[12];
 extern struct zion ZION;
 extern struct bootModeButtons bootButtons;
-
+extern struct errorLEDs errorLED;
+extern uint8_t errorLEDState[12];
 
 void initializeDisplay();
 void drawMainMenu(int indicator);
@@ -35,5 +36,6 @@ void drawSystemInfoMenu(int indicator);
 void drawBootMenu(int indicator, uint8_t button, int menu);
 void drawMenuHeader();
 void getLatestADC();
+int printFaults(int i, int j);
 
 #endif /* INC_MENU_H_ */

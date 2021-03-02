@@ -15,12 +15,18 @@ extern "C" {
 #include "main.h"
 #include <string.h>
 
+extern I2C_HandleTypeDef hi2c2;
 extern I2C_HandleTypeDef hi2c4;
+
 
 #define SOC_ADDRESS			0x53 << 1
 #define ASIC_ADDRESS		0x54 << 1
 #define DISPLAY_ADDRESS		0x55 << 1
 #define EEPROM_I2C			hi2c4
+#define EEPROM_SIZE_KBIT	64
+
+#define SPARE_I2C 			hi2c2
+#define SPARE_ADDRESS		0x53 << 1
 #define EEPROM_SIZE_KBIT	64
 
 int * zionEEPROMPresence();
@@ -29,6 +35,11 @@ void readDataFromEEPROM(uint8_t * data, uint8_t chipAddress, uint16_t memoryAddr
 void clearEEPROM(uint8_t chipAddress);
 void writeZionBinaries();
 int * parseZionEEPROM(uint8_t chipAddress);
+
+#if 1
+void writeDataToSpareEEPROM(uint8_t * data, uint8_t chipAddress, uint16_t memoryAddress, int len, uint16_t timeout);
+void readDataFromSpareEEPROM(uint8_t * data, uint8_t chipAddress, uint16_t memoryAddress, int len, uint16_t timeout);
+#endif
 
 #if 1
 static uint8_t zionEEPROMTrident[2220] = {

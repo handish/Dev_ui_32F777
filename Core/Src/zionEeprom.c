@@ -196,3 +196,22 @@ int * parseZionEEPROM(uint8_t chipAddress){
 	deviceHeaderBytes[4] = previousByteOfHeader[0];
 	return deviceHeaderBytes;
 }
+
+
+void writeDataToSpareEEPROM(uint8_t * data, uint8_t chipAddress, uint16_t memoryAddress, int len,uint16_t timeout){
+	int bytes = 0;
+	int writeSize=32; //32 bytes of data write are allowed per Page Write command
+	while(bytes < len){
+		if((bytes+32)>len){
+			writeSize=len-bytes; //partial page writes are allowed.
+		}
+		HAL_I2C_Mem_Write(&SPARE_I2C,chipAddress,memoryAddress+bytes, I2C_MEMADD_SIZE_16BIT,data+bytes,writeSize,timeout);
+		HAL_Delay(10); //give delay for EEPROM to write data to memory
+		bytes+=32;
+	}
+
+}
+//reads from the EEPROM can be continuous
+void readDataFromSpareEEPROM(uint8_t * data, uint8_t chipAddress, uint16_t memoryAddress, int len,uint16_t timeout){
+	HAL_I2C_Mem_Read(&SPARE_I2C,chipAddress,memoryAddress, I2C_MEMADD_SIZE_16BIT,data,len,timeout);
+}

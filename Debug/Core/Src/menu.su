@@ -1,9 +1,9 @@
 ls027b7dh01.h:142:22:SMLCD_Enable	8	static
 menu.c:13:6:initializeDisplay	112	static
-menu.c:28:6:drawMainMenu	24	static
-menu.c:201:6:drawStatusMenu	72	static
-menu.c:596:6:drawSystemInfoMenu	64	static
-menu.c:869:6:drawBootMenu	40	static
-menu.c:1180:6:drawMenuHeader	16	static
-menu.c:1225:6:getLatestADC	16	static
-menu.c:1236:5:printFaults	24	static
+menu.c:33:6:drawMainMenu	24	static
+menu.c:207:6:drawStatusMenu	72	static
+menu.c:604:6:drawSystemInfoMenu	64	static
+menu.c:877:6:drawBootMenu	40	static
+menu.c:1188:6:drawMenuHeader	16	static
+menu.c:1233:6:getLatestADC	16	static
+menu.c:1244:5:printFaults	24	static

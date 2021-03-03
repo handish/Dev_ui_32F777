@@ -47,7 +47,7 @@ void drawMainMenu(int indicator){
 	//i += LCD_PutStr(i, j, "So many!", fnt7x10);
 	i=150;
 	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
-	if(displayAdcValues[Adc.adc0] >3.5){
+	if(displayAdcValues[Adc.adc0] >VSYS_FLT){
 		//errorLED.vsysPMIFault=0;
 		switch(bootButtons.bootMode){
 		case UNINITIALIZED:
@@ -90,6 +90,7 @@ void drawMainMenu(int indicator){
 	}
 	else{
 		LCD_PutStr(i, j, "OFF", fnt7x10);
+		bootButtons.bootMode=0;
 		//errorLED.vsysPMIFault=1;
 		//errorLED.standard_boot = 0;
 		//errorLED.uefi_boot  = 0;
@@ -1197,7 +1198,7 @@ void drawMenuHeader(){
 	printFaults(i,j);
 	i=275;
 	i += LCD_PutStr(i, j, "MODE:", fnt7x10);
-	if(displayAdcValues[Adc.adc0] >3.5){
+	if(displayAdcValues[Adc.adc0] >VSYS_FLT){
 		switch(bootButtons.bootMode){
 		case UNINITIALIZED:
 			LCD_PutStr(i, j, "OFF", fnt7x10);

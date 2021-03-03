@@ -31,8 +31,10 @@
 #define ADC_BUF_LEN 			5000
 #define ADC_AVG_COUNT 			20
 
-//SOC UART Definitions
+//UART Buffer Length Definitions
 #define SOC_UART_BUF_LEN		1000
+#define SPARE_UART_BUF_LEN		200
+#define DEBUG_UART_BUF_LEN		200
 
 
 
@@ -133,6 +135,20 @@ const osThreadAttr_t bootButtons_attributes = {
   .priority = (osPriority_t) osPriorityNormal2,
   .stack_size = 1024 * 4
 };
+/* Definitions for socUart */
+osThreadId_t socUartHandle;
+const osThreadAttr_t socUart_attributes = {
+  .name = "socUart",
+  .priority = (osPriority_t) osPriorityLow7,
+  .stack_size = 1024 * 4
+};
+/* Definitions for debugUart */
+osThreadId_t debugUartHandle;
+const osThreadAttr_t debugUart_attributes = {
+  .name = "debugUart",
+  .priority = (osPriority_t) osPriorityLow7,
+  .stack_size = 512 * 4
+};
 /* Definitions for Fault_Events */
 osEventFlagsId_t Fault_EventsHandle;
 const osEventFlagsAttr_t Fault_Events_attributes = {
@@ -145,7 +161,17 @@ uint16_t adc3_buf[ADC_BUF_LEN];
 uint8_t adcRestart[3];
 
 //SOC UART Variables
+#define SOC_UART			huart5
 uint8_t soc_Uart_RX_Buf[SOC_UART_BUF_LEN];
+
+//spare Uart Defintions Placed as Huart is only defined later in the file
+#define SPARE_UART			huart4
+uint8_t spare_Uart_RX_Buf[SPARE_UART_BUF_LEN];
+
+//debug UART variables and Definitions
+#define DEBUG_UART			huart7
+uint8_t debug_Uart_RX_Buf[DEBUG_UART_BUF_LEN];
+
 //12 gpio inputs to the Dev UI
 uint8_t gpioInputBuf[12];
 //14 gpio outputs to the Dev UI
@@ -163,8 +189,8 @@ struct bootModeButtons bootButtons = {0,0,0,0,0,0,0,0,0,0};
 
 struct errorLEDs errorLED = {0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-//spare Uart Defintions Placed as Huart is only defined later in the fileh
-#define SPARE_UART			huart4
+
+
 
 //int commandByte=1;
 //int lineByte=1;
@@ -205,9 +231,12 @@ void startNavigationTask(void *argument);
 void startErrorLEDs(void *argument);
 void startZionRead(void *argument);
 void startBootButtons(void *argument);
+void startSocUart(void *argument);
+void startDebugUart(void *argument);
 
 /* USER CODE BEGIN PFP */
-void uartTransmitChar(char *message,int uart);
+void debugUartTransmitChar(char *message);
+void debugUartTransmitStuff(char *message, int size);
 void uartTransmitInt(uint16_t *number, int uart);
 uint8_t * readI2CRegister(uint8_t address, uint8_t reg, int bytes, int i2CBank);
 void setRGBLED(uint8_t R, uint8_t G, uint8_t B);
@@ -221,6 +250,7 @@ void outputGPIOBufInitialization();
 void setVoltageMux(int comChannel, int voltageChannel, int clear);
 void winbondSPIDeviceIDRead(SPI_HandleTypeDef hspi, uint8_t* data);
 void spareUartTransmitRead(char *message);
+uint8_t debugUartParser();
 //void LCD_DrawSomeLinesSingleLine();
 //void LCD_DrawSomeLinesBatchLine();
 //void LCD_BlackWhite(int color);
@@ -301,24 +331,26 @@ int main(void)
   }
    int x=1;
 
-HAL_UART_Receive_DMA(&huart5, soc_Uart_RX_Buf, sizeof(soc_Uart_RX_Buf));
-  uint8_t data[5];
-  int x;
-  for(x=0;x<5;x++){
-	  data[x]=0xfa+x;
-  }
-  writeDataToSpareEEPROM((uint8_t*)data,SPARE_ADDRESS,0x00,sizeof(data),100);
-  for(int x=0;x<5;x++){
-	  data[x]=0;
-  }
-  readDataFromSpareEEPROM((uint8_t*)data,SPARE_ADDRESS,0x00,sizeof(data),100);
-  data[1]=0;
-  uint8_t spiDataRead[6];
-  memset(data,0x00, sizeof(data));
-  winbondSPIDeviceIDRead(hspi5,(uint8_t*)spiDataRead);
-  //char buf[30];
-  spareUartTransmitRead("Lets see what comes out!");
-  x=0;
+   HAL_UART_Receive_DMA(&SPARE_UART, spare_Uart_RX_Buf, sizeof(spare_Uart_RX_Buf));
+   HAL_UART_Receive_DMA(&SOC_UART, soc_Uart_RX_Buf, sizeof(soc_Uart_RX_Buf));
+   HAL_UART_Receive_DMA(&DEBUG_UART, debug_Uart_RX_Buf, sizeof(debug_Uart_RX_Buf));
+//  uint8_t data[5];
+//
+//  for(x=0;x<5;x++){
+//	  data[x]=0xfa+x;
+//  }
+//  writeDataToSpareEEPROM((uint8_t*)data,SPARE_ADDRESS,0x00,sizeof(data),100);
+//  for(int x=0;x<5;x++){
+//	  data[x]=0;
+//  }
+//  readDataFromSpareEEPROM((uint8_t*)data,SPARE_ADDRESS,0x00,sizeof(data),100);
+//  data[1]=0;
+//  uint8_t spiDataRead[6];
+//  memset(data,0x00, sizeof(data));
+//  winbondSPIDeviceIDRead(hspi5,(uint8_t*)spiDataRead);
+//  //char buf[30];
+//  spareUartTransmitRead("Lets see what comes out!");
+//  x=0;
 
   configureLEDDriver();
   
@@ -334,37 +366,37 @@ HAL_UART_Receive_DMA(&huart5, soc_Uart_RX_Buf, sizeof(soc_Uart_RX_Buf));
     setErrorLED(9,ON);
     HAL_Delay(1000);
     setErrorLED(9,OFF);
-    BTN0_ON;
-    HAL_Delay(300);
-    BTN1_ON;
-    HAL_Delay(300);
-    BTN2_ON;
-    HAL_Delay(300);
-    BTN3_ON;
-    HAL_Delay(300);
-    BTN4_ON;
-    HAL_Delay(300);
-    BTN5_ON;
-    HAL_Delay(300);
-    EDL_SW_ON;
-    HAL_Delay(300);
-    EX_SW_ON;
-    HAL_Delay(300);
-    BTN0_OFF;
-    HAL_Delay(300);
-    BTN1_OFF;
-    HAL_Delay(300);
-    BTN2_OFF;
-    HAL_Delay(300);
-    BTN3_OFF;
-    HAL_Delay(300);
-    BTN4_OFF;
-    HAL_Delay(300);
-    BTN5_OFF;
-    HAL_Delay(300);
-    EDL_SW_OFF;
-    HAL_Delay(300);
-    EX_SW_OFF;
+//    BTN0_ON;
+//    HAL_Delay(300);
+//    BTN1_ON;
+//    HAL_Delay(300);
+//    BTN2_ON;
+//    HAL_Delay(300);
+//    BTN3_ON;
+//    HAL_Delay(300);
+//    BTN4_ON;
+//    HAL_Delay(300);
+//    BTN5_ON;
+//    HAL_Delay(300);
+//    EDL_SW_ON;
+//    HAL_Delay(300);
+//    EX_SW_ON;
+//    HAL_Delay(300);
+//    BTN0_OFF;
+//    HAL_Delay(300);
+//    BTN1_OFF;
+//    HAL_Delay(300);
+//    BTN2_OFF;
+//    HAL_Delay(300);
+//    BTN3_OFF;
+//    HAL_Delay(300);
+//    BTN4_OFF;
+//    HAL_Delay(300);
+//    BTN5_OFF;
+//    HAL_Delay(300);
+//    EDL_SW_OFF;
+//    HAL_Delay(300);
+//    EX_SW_OFF;
 
   /* USER CODE END 2 */
 
@@ -411,6 +443,12 @@ HAL_UART_Receive_DMA(&huart5, soc_Uart_RX_Buf, sizeof(soc_Uart_RX_Buf));
 
   /* creation of bootButtons */
   bootButtonsHandle = osThreadNew(startBootButtons, NULL, &bootButtons_attributes);
+
+  /* creation of socUart */
+  socUartHandle = osThreadNew(startSocUart, NULL, &socUart_attributes);
+
+  /* creation of debugUart */
+  debugUartHandle = osThreadNew(startDebugUart, NULL, &debugUart_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1708,13 +1746,17 @@ void setOutputGPIOState(int gpio, int state){
 	}
 }
 
-void uartTransmitChar(char *message, int uart){
+void debugUartTransmitChar(char *message){
 	char uart_buf[200];
 	int uart_buf_len;
 	uart_buf_len = sprintf(uart_buf, message);
-	if (uart == 7){
-		HAL_UART_Transmit(&huart7, (uint8_t *)uart_buf, uart_buf_len,100);
-	}
+	HAL_UART_Transmit(&DEBUG_UART, (uint8_t *)uart_buf, uart_buf_len,100);
+}
+void debugUartTransmitStuff(char *message, int size){
+	char uart_buf[200];
+	int uart_buf_len;
+	uart_buf_len = sprintf(uart_buf, message);
+	HAL_UART_Transmit(&DEBUG_UART, (uint8_t *)uart_buf, size,100);
 }
 void uartTransmitInt(uint16_t *number, int uart){
 	char uart_buf[80];
@@ -1782,7 +1824,7 @@ uint8_t * readI2CRegister(uint8_t address, uint8_t reg, int bytes, int i2CBank){
 		          return (uint8_t*)0xfe;
 		        }
 		  else{
-			  uartTransmitInt(buf[0],7);
+			  //uartTransmitInt(buf[0],7);
 			  return buf;
 		  }
 }
@@ -1830,7 +1872,7 @@ void configureLEDDriver(){
 	//reduce the current multiplier to set brightness lower. See if this works. If not, we can work with PWM.
 	writeI2CRegister(LED.address, LED.iref_reg, (uint8_t*)currentMultiplier,1,LED.i2cBank);
 	buf = readI2CRegister(LED.address,LED.iref_reg,1,LED.i2cBank);
-	uartTransmitInt(buf[0],7);
+	//uartTransmitInt(buf[0],7);
 	//Turn on oscillator. Must be turned on before LED driver functions
 	writeI2CRegister(LED.address,LED.mode0_reg,(uint8_t*)LED.mode0_oscon_value,1,LED.i2cBank);
 	//clear the default state of the led register.
@@ -2121,9 +2163,47 @@ void spareUartTransmitRead(char *message){
 	char uart_receive_buf[200];
 	int uart_buf_len;
 	uart_buf_len = sprintf(uart_buf, message);
-	HAL_UART_Transmit(&SPARE_UART,(uint8_t *)uart_buf, uart_buf_len,1000);
-	HAL_UART_Receive(&SPARE_UART,(uint8_t*)uart_receive_buf, sizeof(uart_receive_buf),1000);
+	HAL_UART_Transmit(&SPARE_UART,(uint8_t *)uart_buf, uart_buf_len,100);
+	//HAL_UART_Receive(&SPARE_UART,(uint8_t*)uart_receive_buf, sizeof(uart_receive_buf),1000);
 	int x;
+}
+
+uint8_t debugUartParser(){
+	int x;
+	uint8_t  key_uint8[4];
+	uint8_t var_Seen[4];
+	key_uint8[0] = (uint8_t)'G';
+	key_uint8[1] = (uint8_t)'I';
+	key_uint8[2] = (uint8_t)'V';
+	key_uint8[3] = (uint8_t)'E';
+	//memcpy(key_uint8,(const uint8_t*)key, 4);
+	x=5;
+
+	for(x=0;x<sizeof(debug_Uart_RX_Buf);x++){
+		if(debug_Uart_RX_Buf[x]==key_uint8[0]){
+			var_Seen[0] = 1;
+		}
+		else if(debug_Uart_RX_Buf[x]==key_uint8[1] && var_Seen[0]){
+			var_Seen[1] = 1;
+		}
+		else if(debug_Uart_RX_Buf[x]==key_uint8[2] && var_Seen[1]){
+			var_Seen[2] = 1;
+		}
+		else if(debug_Uart_RX_Buf[x]==key_uint8[3] && var_Seen[2]){
+			var_Seen[3] = 1;
+			break;
+		}
+		else{
+			memset(var_Seen,0x00,sizeof(var_Seen));
+		}
+	}
+	if(var_Seen[3]){
+		memset(debug_Uart_RX_Buf,0x00,sizeof(debug_Uart_RX_Buf));
+		return true;
+	}
+	else{
+		return false;
+	}
 }
 /* USER CODE END 4 */
 
@@ -2141,6 +2221,7 @@ void startHeartbeat(void *argument)
   for(;;)
   {
 	  HAL_GPIO_TogglePin(GPIOI,MCU_HEARTBEAT_Pin);
+	  //spareUartTransmitRead("YOYOYO!\r\n");
 	  osDelay(500);
   }
 
@@ -2260,28 +2341,28 @@ void GetDaScreenBlink(void *argument)
 		  {
 		  case BOOT_MENU:
 		  {
-			  printf("BOOT_MENU\r\n");
+			  //printf("BOOT_MENU\r\n");
 			  drawBootMenu(menu_val, button_val, running_menu);
 			  //uartTransmitChar("switch BOOT_MENU\r\n",7);
 			  break;
 		  }
 		  case MAIN_MENU:
 		  {
-			  printf("MAIN_MENU\r\n");
+			  //printf("MAIN_MENU\r\n");
 			  drawMainMenu(menu_val);
 			  //uartTransmitChar("switch MAIN_MENU\r\n",7);
 			  break;
 		  }
 		  case STATUS_MENU:
 		  {
-			  printf("STATUS_MENU\r\n");
+			  //printf("STATUS_MENU\r\n");
 			  drawStatusMenu(menu_val);
 			  //uartTransmitChar("switch STATUS_MENU\r\n",7);
 			  break;
 		  }
 		  case SYSTEM_INFO_MENU:
 		  {
-			  printf("SYSTEM INFO MENU\r\n");
+			  //printf("SYSTEM INFO MENU\r\n");
 			  //uartTransmitChar("switch SYSTEM INFO_MENU\r\n",7);
 			  drawSystemInfoMenu(menu_val);
 			  break;
@@ -2502,8 +2583,8 @@ void startErrorLEDs(void *argument)
 				errorLED.standard_boot=false;
 				errorLED.uefi_boot=false;
 				errorLED.edl_boot=false;
-				errorLED.boot_fault=true;
-				R = true;
+				errorLED.boot_fault=false;
+				R = false;
 				break;
 			case STANDARD:
 				errorLED.standard_boot=true;
@@ -2865,6 +2946,104 @@ void startBootButtons(void *argument)
     osDelay(800);
   }
   /* USER CODE END startBootButtons */
+}
+
+/* USER CODE BEGIN Header_startSocUart */
+/**
+* @brief Function implementing the socUart thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startSocUart */
+void startSocUart(void *argument)
+{
+  /* USER CODE BEGIN startSocUart */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(10000);
+  }
+  /* USER CODE END startSocUart */
+}
+
+/* USER CODE BEGIN Header_startDebugUart */
+/**
+* @brief Function implementing the debugUart thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startDebugUart */
+void startDebugUart(void *argument)
+{
+  /* USER CODE BEGIN startDebugUart */
+	uint8_t commandSent;
+	int x;
+  /* Infinite loop */
+	float * presentADCValues;
+
+
+  for(;;)
+  {
+	  if(adcRestart[0] && adcRestart[1] && adcRestart[2]){
+		  presentADCValues = getADCValues();
+
+	  }
+	  commandSent = debugUartParser();
+	  if(commandSent == true){
+		  char buf[5];
+		  debugUartTransmitChar("ADCValues:");
+		  for(x=0;x<21;x++){
+			  sprintf(buf, "%f", *(presentADCValues+x));
+			  //snprintf(buf, 5, "%f", *(presentADCValues+x));
+			  debugUartTransmitStuff(buf,5);
+			  if(x<20){
+				  debugUartTransmitChar(",");
+			  }
+
+		  }
+		  debugUartTransmitChar("\r\n");
+		  debugUartTransmitChar("INPUT GPIOs:");
+		  //uint8_t gpioInputs[12];
+		  //memcpy(gpioInputs,gpioInputBuf,sizeof(gpioInputBuf));
+		  for(x=0;x<sizeof(gpioInputBuf);x++){
+			  sprintf(buf,"%x",gpioInputBuf[x]);
+			  debugUartTransmitChar(buf);
+			  if(x<(sizeof(gpioInputBuf))-1){
+				  debugUartTransmitChar(",");
+			  }
+		  }
+		  //HAL_UART_Transmit(&DEBUG_UART,(uint8_t *)gpioInputs, sizeof(gpioInputs),100);
+		  debugUartTransmitChar("\r\n");
+		  debugUartTransmitChar("Errors:");
+		  uint8_t errors[11];
+		  errors[0] = errorLED.zionFault;
+		  errors[1] = errorLED.vsysPMIFault;
+		  errors[2] = errorLED.fault3;
+		  errors[3] = errorLED.fault4;
+		  errors[4] = errorLED.fault5;
+		  errors[5] = errorLED.fault6;
+		  errors[6] = errorLED.fault7;
+		  errors[7] = errorLED.fault8;
+		  errors[8] = errorLED.fault9;
+		  errors[9] = errorLED.boot_fault;
+		  errors[10] = errorLED.ledDriver;
+		  for(x=0;x<sizeof(errors);x++){
+			  sprintf(buf,"%x",errors[x]);
+			  debugUartTransmitChar(buf);
+			  if(x<(sizeof(errors))-1){
+				  debugUartTransmitChar(",");
+			  }
+		  }
+		  debugUartTransmitChar("\r\n");
+		  debugUartTransmitChar("Boot Mode:");
+		  sprintf(buf,"%d",bootButtons.bootMode);
+		  debugUartTransmitChar(buf);
+		  //HAL_UART_Transmit(&DEBUG_UART,(uint8_t *)bootButtons.bootMode, 1,100);
+		  debugUartTransmitChar("\r\n");
+	  }
+    osDelay(500);
+  }
+  /* USER CODE END startDebugUart */
 }
 
  /**

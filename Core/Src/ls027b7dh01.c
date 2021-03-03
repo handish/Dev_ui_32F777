@@ -89,35 +89,50 @@ void SMLCD_Init(SPI_HandleTypeDef hspi) {
 }
 
 // Clear display memory (clear screen)
-void SMLCD_Clear(void) {
+HAL_StatusTypeDef SMLCD_Clear(void) {
 	// Send "Clear Screen" command
 	uint8_t sendBytes[2];
+	HAL_StatusTypeDef Status = HAL_OK;
 	SMLCD_SCS_H;
 	sendBytes[0]=SMLCD_CMD_CLS;
 	sendBytes[1]=SMLCD_CMD_NOP;
-	HAL_SPI_Transmit(&SMLCD_SPI_PORT, sendBytes, sizeof(sendBytes), 100);
+	Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, sendBytes, sizeof(sendBytes), 100);
 	//HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_CLS, 1, 100);
 	//HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
 	//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_CLS);
 	//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_NOP);
 	SMLCD_SCS_L;
+	return Status;
 }
 
 #if (SMLCD_VCOM_SOFT)
 // Toggle VCOM bit
-void SMLCD_ToggleVCOM(void) {
+HAL_StatusTypeDef SMLCD_ToggleVCOM(void) {
+	HAL_StatusTypeDef Status = HAL_OK;
 	SMLCD_VCOM ^= SMLCD_CMD_VCOM;
 	SMLCD_SCS_H;
-	HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_VCOM, 1, 100);
-	HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+	Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_VCOM, 1, 100);
+	if (Status != HAL_OK)
+	{
+		SMLCD_SCS_L;
+		return Status;
+	}
+	Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+	if (Status != HAL_OK)
+	{
+		SMLCD_SCS_L;
+		return Status;
+	}
 	//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_VCOM);
 	//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_NOP);
 	SMLCD_SCS_L;
+	return HAL_OK;
 }
 #endif // SMLCD_VCOM_SOFT
 
 // Send vRAM buffer into display
-void SMLCD_Flush(void) {
+HAL_StatusTypeDef SMLCD_Flush(void) {
+	HAL_StatusTypeDef Status = HAL_OK;
 	int commandByte=1;
 	int lineByte=1;
 	int lineAmount=SCR_H;
@@ -151,8 +166,12 @@ void SMLCD_Flush(void) {
 				transmitBuffer[52]=SMLCD_CMD_NOP;
 				transmitBuffer[53] = SMLCD_CMD_NOP;
 				SMLCD_SCS_H;
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, (uint8_t *)transmitBuffer, sizeof(transmitBuffer), 100);
+				Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, (uint8_t *)transmitBuffer, sizeof(transmitBuffer), 100);
 				SMLCD_SCS_L;
+				if (Status != HAL_OK)
+				{
+					return Status;
+				}
 
 				//HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
 				//SPI_SendRecv(&SMLCD_SPI_PORT, __reverse8bit(line));
@@ -166,13 +185,28 @@ void SMLCD_Flush(void) {
 			ptr = &vRAM[((SCR_W * SCR_H) >> 3) - 1];
 			while (--line > 0) {
 
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, __reverse8bit(line), 1, 100);
+				Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, __reverse8bit(line), 1, 100);
+				if (Status != HAL_OK)
+				{
+					SMLCD_SCS_L;
+					return Status;
+				}
 				//SPI_SendRecv(&SMLCD_SPI_PORT, __reverse8bit(line));
 				for (idx = 0; idx < SCR_W >> 3; idx++) {
-					HAL_SPI_Transmit(&SMLCD_SPI_PORT, *ptr--, 1, 100);
+					Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, *ptr--, 1, 100);
+					if (Status != HAL_OK)
+					{
+						SMLCD_SCS_L;
+						return Status;
+					}
 					//SPI_SendRecv(&SMLCD_SPI_PORT, *ptr--);
 				}
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+				Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+				if (Status != HAL_OK)
+				{
+					SMLCD_SCS_L;
+					return Status;
+				}
 				//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_NOP);
 			}
 			break;
@@ -180,13 +214,27 @@ void SMLCD_Flush(void) {
 			line = 0;
 			ptr = &vRAM[((SCR_W * SCR_H) >> 3) - 1];
 			while (line++ < SCR_H + 1) {
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, __reverse8bit(line), 1, 100);
+				Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, __reverse8bit(line), 1, 100);
+				if (Status != HAL_OK)
+				{
+					SMLCD_SCS_L;
+					return Status;
+				}
 				//SPI_SendRecv(&SMLCD_SPI_PORT, __reverse8bit(line));
 				for (idx = 0; idx < SCR_W >> 3; idx++) {
-					HAL_SPI_Transmit(&SMLCD_SPI_PORT, *ptr--, 1, 100);
+					Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, *ptr--, 1, 100);
+					if (Status != HAL_OK)
+					{
+						return Status;
+					}
 					//SPI_SendRecv(&SMLCD_SPI_PORT, *ptr--);
 				}
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+				Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, SMLCD_CMD_NOP, 1, 100);
+				if (Status != HAL_OK)
+				{
+					SMLCD_SCS_L;
+					return Status;
+				}
 				//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_NOP);
 			}
 			break;
@@ -206,8 +254,12 @@ void SMLCD_Flush(void) {
 				transmitBuffer[52]=SMLCD_CMD_NOP;
 				transmitBuffer[53] = SMLCD_CMD_NOP;
 				SMLCD_SCS_H;
-				HAL_SPI_Transmit(&SMLCD_SPI_PORT, (uint8_t *)transmitBuffer, sizeof(transmitBuffer), 100);
+				Status = HAL_SPI_Transmit(&SMLCD_SPI_PORT, (uint8_t *)transmitBuffer, sizeof(transmitBuffer), 100);
 				SMLCD_SCS_L;
+				if (Status != HAL_OK)
+				{
+					return Status;
+				}
 				//SPI_SendRecv(&SMLCD_SPI_PORT, __reverse8bit(line));
 				//SPI_SendBuf(&SMLCD_SPI_PORT, ptr, SCR_W >> 3);
 				//SPI_SendRecv(&SMLCD_SPI_PORT, SMLCD_CMD_NOP);
@@ -215,6 +267,7 @@ void SMLCD_Flush(void) {
 			}
 			break;
 	}
+	return HAL_OK;
 	// One more trailer after last string has been transmitted
 	//transmitBuffer[bufferCounter] = SMLCD_CMD_NOP;
 	//HAL_SPI_Transmit(&SMLCD_SPI_PORT, (uint8_t *)transmitBuffer, sizeof(transmitBuffer), 100);

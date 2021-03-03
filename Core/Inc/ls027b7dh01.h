@@ -152,11 +152,11 @@ __STATIC_INLINE void SMLCD_Disable(void) {
 // Function prototypes
 void SMLCD_InitGPIO(void);
 void SMLCD_Init(SPI_HandleTypeDef hspi);
-void SMLCD_Clear(void);
+HAL_StatusTypeDef SMLCD_Clear(void);
 #if (SMLCD_VCOM_SOFT)
-void SMLCD_ToggleVCOM(void);
+HAL_StatusTypeDef SMLCD_ToggleVCOM(void);
 #endif // SMLCD_VCOM_SOFT
-void SMLCD_Flush(void);
+HAL_StatusTypeDef SMLCD_Flush(void);
 void SMLCD_Orientation(uint8_t orientation);
 
 void LCD_Clear(void);

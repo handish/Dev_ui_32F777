@@ -53,7 +53,8 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-
+#define true	1
+#define	false	0
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/
@@ -67,7 +68,8 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+int writeI2CRegister(uint8_t address, uint8_t reg, uint8_t * bytes, int numBytes, int i2CBank);
+void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_param1, uint8_t err_param2, uint8_t critical_fault);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -330,9 +332,16 @@ void Error_Handler(void);
 
 
 //MODE LEDs
-#define STANDARD_LED			7
-#define UEFI_LED				8
+#define BOOT_FAULT_LED			7
+#define STANDARD_LED			8
 #define EDL_LED					9
+#define UEFI_LED				9
+
+//MODE LED / RGB LED output defines
+#define RED						7
+#define	GREEN					8
+#define	BLUE					9
+
 
 //placeholder defines for other fault LEDs
 #define FAULT3				2
@@ -344,24 +353,30 @@ void Error_Handler(void);
 #define FAULT9				11
 
 
+// Thresholds for FAULTS
+#define VSYS_FLT			3.5
 
 
+//spare SPI definitions
+#define SPARE_SS_ON 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,ON);
+#define SPARE_SS_OFF 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,OFF);
 
 
 struct errorLEDs{
-	int zionFault;
-	int vsysPMIFault;
-	int fault3;
-	int fault4;
-	int fault5;
-	int fault6;
-	int fault7;
-	int standard_boot;
-	int uefi_boot;
-	int edl_boot;
-	int fault8;
-	int fault9;
-	int ledDriver;
+	uint8_t zionFault;
+	uint8_t vsysPMIFault;
+	uint8_t fault3;
+	uint8_t fault4;
+	uint8_t fault5;
+	uint8_t fault6;
+	uint8_t fault7;
+	uint8_t boot_fault;
+	uint8_t standard_boot;
+	uint8_t uefi_boot;
+	uint8_t edl_boot;
+	uint8_t fault8;
+	uint8_t fault9;
+	uint8_t ledDriver;
 };
 
 struct LED{
@@ -381,9 +396,6 @@ struct LED{
 };
 static struct LED LED = {0x60 << 1, 0x00, 0x14, 0x15, 0x16, 0x17, 0x1C,0x11,0x09,0x0A,0x0B, 0x08,1};
 
-//spare SPI definitions
-#define SPARE_SS_ON 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,ON);
-#define SPARE_SS_OFF 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,OFF);
 
 
 struct bootModeButtons{

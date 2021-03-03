@@ -1561,7 +1561,7 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 
 	// Set error LED
 	//setErrorLED(FAULT9, true);
-
+	errorLED.fault9 = true;
 	// Use event group flag to indicate an error for the startErrorLED task.
 
 	// If the fault is labeled as "critical" stay here.  Else keep running RTOS.
@@ -1777,7 +1777,9 @@ int writeI2CRegister(uint8_t address, uint8_t reg, uint8_t * bytes, int numBytes
   		return ret;
   	}
   	else
+  	{
   		return HAL_OK;
+  	}
 }
 void configureLEDDriver(){
 	uint8_t currentMultiplier = 0b00000001;
@@ -2096,9 +2098,12 @@ void startHeartbeat(void *argument)
 void startADCRead(void *argument)
 {
   /* USER CODE BEGIN startADCRead */
+  HAL_StatusTypeDef Status = HAL_OK;
   /* Infinite loop */
   for(;;)
   {
+	  // Clear HAL fault LED
+	  errorLED.fault9 = false;
 	  //empty out the data ready variables and the adc3_bufs
 	memset(adcRestart,0,sizeof(adcRestart));
 	memset(adc1_buf, 0, sizeof(adc1_buf));
@@ -2106,8 +2111,20 @@ void startADCRead(void *argument)
 	memset(adc3_buf, 0, sizeof(adc3_buf));
 	//restart the DMAs.
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
+	if (Status != HAL_OK)
+	{
+		DevUI_Error_Handler("ADC1 Failed read.", Status, 0, 0, true);
+	}
 	HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
+	if (Status != HAL_OK)
+	{
+		DevUI_Error_Handler("ADC2 Failed read.", Status, 0, 0, true);
+	}
 	HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
+	if (Status != HAL_OK)
+	{
+		DevUI_Error_Handler("ADC3 Failed read.", Status, 0, 0, true);
+	}
     osDelay(600);
   }
   /* USER CODE END startADCRead */

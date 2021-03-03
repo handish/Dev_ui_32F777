@@ -566,6 +566,8 @@ void drawStatusMenu(int indicator){
 		i2cCheck=writeI2CRegister(socI2cVoltageMux.address, 0x11, 0x00,1,socI2cVoltageMux.i2cBank);
 		if(i2cCheck == HAL_OK){
 			LCD_PutStr(i, j, "Present", fnt7x10);
+			// Clear the HAL fault LED.
+			errorLED.fault9 = false;
 		}
 		else{
 			LCD_PutStr(i, j, "Undetected", fnt7x10);

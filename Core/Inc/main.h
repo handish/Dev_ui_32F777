@@ -344,9 +344,7 @@ void Error_Handler(void);
 #define FAULT9				11
 
 
-//spare SPI definitions
-#define SPARE_SS_ON 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,ON);
-#define SPARE_SS_OFF 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,OFF);
+
 
 
 
@@ -382,6 +380,11 @@ struct LED{
 	int i2cBank;
 };
 static struct LED LED = {0x60 << 1, 0x00, 0x14, 0x15, 0x16, 0x17, 0x1C,0x11,0x09,0x0A,0x0B, 0x08,1};
+
+//spare SPI definitions
+#define SPARE_SS_ON 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,ON);
+#define SPARE_SS_OFF 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,OFF);
+
 
 struct bootModeButtons{
 	int bootModeSet; //tells the boot button task to get working

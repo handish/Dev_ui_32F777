@@ -27,9 +27,15 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+//ADC Definitions
 #define ADC_BUF_LEN 			5000
 #define ADC_AVG_COUNT 			20
+
+//SOC UART Definitions
 #define SOC_UART_BUF_LEN		1000
+
+
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -152,7 +158,7 @@ struct bootModeButtons bootButtons = {0,0,0,0,0,0,0,0,0,0};
 
 struct errorLEDs errorLED = {0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-//spare Uart Defintions
+//spare Uart Defintions Placed as Huart is only defined later in the fileh
 #define SPARE_UART			huart4
 
 //int commandByte=1;
@@ -275,6 +281,10 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
+
+
+
+  configureLEDDriver();
   HAL_UART_Receive_DMA(&huart5, soc_Uart_RX_Buf, sizeof(soc_Uart_RX_Buf));
   uint8_t data[5];
   int x;
@@ -293,9 +303,6 @@ int main(void)
   //char buf[30];
   spareUartTransmitRead("Lets see what comes out!");
   x=0;
-
-
-  configureLEDDriver();
     setErrorLED(0,ON);
     HAL_Delay(1000);
     setErrorLED(1,OFF);

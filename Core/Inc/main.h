@@ -332,9 +332,16 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 
 
 //MODE LEDs
-#define STANDARD_LED			7
-#define UEFI_LED				8
+#define BOOT_FAULT_LED			7
+#define STANDARD_LED			8
 #define EDL_LED					9
+#define UEFI_LED				9
+
+//MODE LED / RGB LED output defines
+#define RED						7
+#define	GREEN					8
+#define	BLUE					9
+
 
 //placeholder defines for other fault LEDs
 #define FAULT3				2
@@ -349,19 +356,20 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 #define VSYS_FLT			3.5
 
 struct errorLEDs{
-	int zionFault;
-	int vsysPMIFault;
-	int fault3;
-	int fault4;
-	int fault5;
-	int fault6;
-	int fault7;
-	int standard_boot;
-	int uefi_boot;
-	int edl_boot;
-	int fault8;
-	int fault9;
-	int ledDriver;
+	uint8_t zionFault;
+	uint8_t vsysPMIFault;
+	uint8_t fault3;
+	uint8_t fault4;
+	uint8_t fault5;
+	uint8_t fault6;
+	uint8_t fault7;
+	uint8_t boot_fault;
+	uint8_t standard_boot;
+	uint8_t uefi_boot;
+	uint8_t edl_boot;
+	uint8_t fault8;
+	uint8_t fault9;
+	uint8_t ledDriver;
 };
 
 struct LED{

@@ -6,4 +6,4 @@ menu.c:596:6:drawSystemInfoMenu	64	static
 menu.c:869:6:drawBootMenu	40	static
 menu.c:1180:6:drawMenuHeader	16	static
 menu.c:1225:6:getLatestADC	16	static
-menu.c:1237:5:printFaults	24	static
+menu.c:1236:5:printFaults	24	static

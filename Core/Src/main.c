@@ -27,8 +27,9 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-#define ADC_BUF_LEN 5000
-#define ADC_AVG_COUNT 20
+#define ADC_BUF_LEN 			5000
+#define ADC_AVG_COUNT 			20
+#define SOC_UART_BUF_LEN		1000
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -64,7 +65,9 @@ TIM_HandleTypeDef htim5;
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart7;
+DMA_HandleTypeDef hdma_uart4_rx;
 DMA_HandleTypeDef hdma_uart5_rx;
+DMA_HandleTypeDef hdma_uart7_rx;
 
 PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
@@ -129,6 +132,9 @@ uint16_t adc1_buf[ADC_BUF_LEN];
 uint16_t adc2_buf[ADC_BUF_LEN];
 uint16_t adc3_buf[ADC_BUF_LEN];
 uint8_t adcRestart[3];
+
+//SOC UART Variables
+uint8_t soc_Uart_RX_Buf[SOC_UART_BUF_LEN];
 //12 gpio inputs to the Dev UI
 uint8_t gpioInputBuf[12];
 //14 gpio outputs to the Dev UI
@@ -145,6 +151,9 @@ struct zion ZION = {0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 struct bootModeButtons bootButtons = {0,0,0,0,0,0,0,0,0,0};
 
 struct errorLEDs errorLED = {0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+//spare Uart Defintions
+#define SPARE_UART			huart4
 
 //int commandByte=1;
 //int lineByte=1;
@@ -199,6 +208,8 @@ uint8_t *getInputGPIOState(void);
 void setOutputGPIOState(int gpio, int state);
 void outputGPIOBufInitialization();
 void setVoltageMux(int comChannel, int voltageChannel, int clear);
+void winbondSPIDeviceIDRead(SPI_HandleTypeDef hspi, uint8_t* data);
+void spareUartTransmitRead(char *message);
 //void LCD_DrawSomeLinesSingleLine();
 //void LCD_DrawSomeLinesBatchLine();
 //void LCD_BlackWhite(int color);
@@ -264,8 +275,24 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc1_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc2, (uint32_t*)adc2_buf, ADC_BUF_LEN);
   HAL_ADC_Start_DMA(&hadc3, (uint32_t*)adc3_buf, ADC_BUF_LEN);
-   int x=1;
-
+  HAL_UART_Receive_DMA(&huart5, soc_Uart_RX_Buf, sizeof(soc_Uart_RX_Buf));
+  uint8_t data[5];
+  int x;
+  for(x=0;x<5;x++){
+	  data[x]=0xfa+x;
+  }
+  writeDataToSpareEEPROM((uint8_t*)data,SPARE_ADDRESS,0x00,sizeof(data),100);
+  for(int x=0;x<5;x++){
+	  data[x]=0;
+  }
+  readDataFromSpareEEPROM((uint8_t*)data,SPARE_ADDRESS,0x00,sizeof(data),100);
+  data[1]=0;
+  uint8_t spiDataRead[6];
+  memset(data,0x00, sizeof(data));
+  winbondSPIDeviceIDRead(hspi5,(uint8_t*)spiDataRead);
+  //char buf[30];
+  spareUartTransmitRead("Lets see what comes out!");
+  x=0;
 
 
   configureLEDDriver();
@@ -1339,6 +1366,12 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
@@ -1960,6 +1993,24 @@ void setVoltageMux(int comChannel, int voltageChannel, int clear){
 //
 //// Called when buffer is completely filled
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+}
+
+void winbondSPIDeviceIDRead(SPI_HandleTypeDef hspi, uint8_t* data){
+	uint8_t dataSent[1] = {0x9f};
+	SPARE_SS_ON;
+	HAL_SPI_TransmitReceive(&hspi, (uint8_t*)dataSent, data,4,100);
+	SPARE_SS_OFF;
+	int x;
+}
+
+void spareUartTransmitRead(char *message){
+	char uart_buf[200];
+	char uart_receive_buf[200];
+	int uart_buf_len;
+	uart_buf_len = sprintf(uart_buf, message);
+	HAL_UART_Transmit(&SPARE_UART,(uint8_t *)uart_buf, uart_buf_len,1000);
+	HAL_UART_Receive(&SPARE_UART,(uint8_t*)uart_receive_buf, sizeof(uart_receive_buf),1000);
+	int x;
 }
 /* USER CODE END 4 */
 

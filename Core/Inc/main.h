@@ -343,6 +343,13 @@ void Error_Handler(void);
 #define FAULT8				10
 #define FAULT9				11
 
+
+//spare SPI definitions
+#define SPARE_SS_ON 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,ON);
+#define SPARE_SS_OFF 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,OFF);
+
+
+
 struct errorLEDs{
 	int zionFault;
 	int vsysPMIFault;

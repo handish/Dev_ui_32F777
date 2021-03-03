@@ -30,7 +30,11 @@ extern DMA_HandleTypeDef hdma_adc2;
 
 extern DMA_HandleTypeDef hdma_adc3;
 
+extern DMA_HandleTypeDef hdma_uart4_rx;
+
 extern DMA_HandleTypeDef hdma_uart5_rx;
+
+extern DMA_HandleTypeDef hdma_uart7_rx;
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
@@ -968,6 +972,25 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitStruct.Alternate = GPIO_AF8_UART4;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+    /* UART4 DMA Init */
+    /* UART4_RX Init */
+    hdma_uart4_rx.Instance = DMA1_Stream2;
+    hdma_uart4_rx.Init.Channel = DMA_CHANNEL_4;
+    hdma_uart4_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_uart4_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_uart4_rx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_uart4_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_uart4_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_uart4_rx.Init.Mode = DMA_CIRCULAR;
+    hdma_uart4_rx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_uart4_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_uart4_rx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(huart,hdmarx,hdma_uart4_rx);
+
   /* USER CODE BEGIN UART4_MspInit 1 */
 
   /* USER CODE END UART4_MspInit 1 */
@@ -1011,7 +1034,10 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     hdma_uart5_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
     hdma_uart5_rx.Init.Mode = DMA_CIRCULAR;
     hdma_uart5_rx.Init.Priority = DMA_PRIORITY_LOW;
-    hdma_uart5_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    hdma_uart5_rx.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    hdma_uart5_rx.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+    hdma_uart5_rx.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_uart5_rx.Init.PeriphBurst = DMA_PBURST_SINGLE;
     if (HAL_DMA_Init(&hdma_uart5_rx) != HAL_OK)
     {
       Error_Handler();
@@ -1045,6 +1071,25 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitStruct.Alternate = GPIO_AF8_UART7;
     HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
+    /* UART7 DMA Init */
+    /* UART7_RX Init */
+    hdma_uart7_rx.Instance = DMA1_Stream3;
+    hdma_uart7_rx.Init.Channel = DMA_CHANNEL_5;
+    hdma_uart7_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_uart7_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_uart7_rx.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_uart7_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    hdma_uart7_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    hdma_uart7_rx.Init.Mode = DMA_CIRCULAR;
+    hdma_uart7_rx.Init.Priority = DMA_PRIORITY_LOW;
+    hdma_uart7_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    if (HAL_DMA_Init(&hdma_uart7_rx) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    __HAL_LINKDMA(huart,hdmarx,hdma_uart7_rx);
+
   /* USER CODE BEGIN UART7_MspInit 1 */
 
   /* USER CODE END UART7_MspInit 1 */
@@ -1074,6 +1119,8 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     */
     HAL_GPIO_DeInit(GPIOC, SPARE_UART_RX_3V3_Pin|SPARE_UART_TX_3V3_Pin);
 
+    /* UART4 DMA DeInit */
+    HAL_DMA_DeInit(huart->hdmarx);
   /* USER CODE BEGIN UART4_MspDeInit 1 */
 
   /* USER CODE END UART4_MspDeInit 1 */
@@ -1116,6 +1163,8 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     */
     HAL_GPIO_DeInit(GPIOE, FTDI_UART_RX_Pin|FTDI_UART_CTS_L_Pin|FTDI_UART_TX_Pin|FTDI_UART_RTS_L_Pin);
 
+    /* UART7 DMA DeInit */
+    HAL_DMA_DeInit(huart->hdmarx);
   /* USER CODE BEGIN UART7_MspDeInit 1 */
 
   /* USER CODE END UART7_MspDeInit 1 */

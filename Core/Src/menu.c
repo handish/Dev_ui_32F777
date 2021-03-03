@@ -1227,9 +1227,8 @@ void getLatestADC(){
 	float * adcValuePointer;
 	 if (adcRestart[0] & adcRestart[1] & adcRestart[2]){
 		  adcValuePointer = getADCValues();
-		  for(i=0;i<20;i++){
-	  		  displayAdcValues[i]=*adcValuePointer;
-	  		  adcValuePointer++;
+		  for(i=0;i<21;i++){
+	  		  displayAdcValues[i]=*(adcValuePointer+i);
 		  }
 	 }
 }

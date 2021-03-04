@@ -367,6 +367,9 @@ int main(void)
     setErrorLED(9,ON);
     HAL_Delay(1000);
     setErrorLED(9,OFF);
+
+    printf("Welcome to DevUI!\r\n");
+    printf("DevUI SW Version: 1.0\r\n");
 //    BTN0_ON;
 //    HAL_Delay(300);
 //    BTN1_ON;

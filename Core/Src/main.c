@@ -1639,8 +1639,7 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 	printf("ERROR: %s" " Code: %d Param1: 0x%x Param2: 0x%x\r\n", msg, ErrorCode, err_param1, err_param2);
 
 	// Set error LED
-	//setErrorLED(FAULT9, true);
-	errorLED.fault9 = true;
+	//errorLED.fault9 = true;
 	// Use event group flag to indicate an error for the startErrorLED task.
 
 	// If the fault is labeled as "critical" stay here.  Else keep running RTOS.
@@ -2243,7 +2242,7 @@ void startADCRead(void *argument)
   for(;;)
   {
 	  // Clear HAL fault LED
-	  errorLED.fault9 = false;
+	  //errorLED.fault9 = false;
 	  //empty out the data ready variables and the adc3_bufs
 	memset(adcRestart,0,sizeof(adcRestart));
 	memset(adc1_buf, 0, sizeof(adc1_buf));
@@ -2550,20 +2549,103 @@ void startErrorLEDs(void *argument)
 	uint8_t G;
 	uint8_t B;
 	float * presentADCValues;
+
+	// An array of voltage rails that are monitored for faults.  Each element maps to the apporpriate ADC channel for monitoring
+	uint8_t monitor_rails[] = {VSYS, V1, V2, V3};
+
+	// An array of falling edge fault thresholds for the voltage rails that are monitored for faults.
+	double monitor_fault_thresholds[] = {VSYS_FLT, V1_FLT, V2_FLT, V3_FLT};
+
+	// An array of platform gpio inputs that are monitored for faults.  Each element maps to the appropriate STM GPIO input for monitoring
+	uint8_t monitor_gpio[] = {SOC_IN0, SOC_IN3, SOC_IN8, SOC_IN11};
+
+	// An array of logic fault thresholds for the GPIO input rails that are monitored for faults.  The fault thresholds should match the mapping used in monitor_gpio[].
+	uint8_t gpio_thresholds[] = {SOC_IN0_FLT, SOC_IN3_FLT, SOC_IN8_FLT, SOC_IN11_FLT};
+
+	uint8_t * errorLEDptr;
+
   for(;;)
   {
 	  R = false;
 	  G = false;
 	  B = false;
+	  // Check that the ADC are available, and if they are, retrieve the last recorded ADC outputs.
 	  if(adcRestart[0] && adcRestart[1] && adcRestart[2]){
 		  presentADCValues = getADCValues();
 	  }
-	  if(*(presentADCValues+Adc.adc0) > VSYS_FLT){
-		  errorLED.vsysPMIFault=false;
+
+	  // Iterate through all the ADC channels that are monitored for faults
+	  for (uint8_t rail = 0; rail < sizeof(monitor_rails)/sizeof(monitor_rails[0]); rail++)
+	  {
+		  // This switch statement maps the appropriate errorLED struct fault flag to the errorLEDptr so that we can clear or set it.
+		  // To add more faults simply add more case statements.
+		  switch (monitor_rails[rail])
+		  {
+		  case VSYS:
+			  errorLEDptr = &errorLED.vsysPMIFault;
+			  break;
+		  case V1:
+			  errorLEDptr = &errorLED.fault3;
+			  break;
+		  case V2:
+			  errorLEDptr = &errorLED.fault4;
+			  break;
+		  case V3:
+			  errorLEDptr = &errorLED.fault5;
+			  break;
+		  default:
+			  break;
+		  }
+		  // If the voltage level is above the low fault threshold then clear the fault flag.
+		  if (*(presentADCValues+monitor_rails[rail]) > monitor_fault_thresholds[rail])
+		  {
+			  *errorLEDptr = false;
+		  }
+		  else
+		  {
+			  *errorLEDptr = true;
+		  }
 	  }
-	  else{
-		  errorLED.vsysPMIFault=true;
+
+	  // Check GPIO inputs for faults. Iterate through the inputs that are supposed to be monitored for faults.
+	  for (uint8_t input = 0; input < sizeof(monitor_gpio)/sizeof(monitor_gpio[0]); input++)
+	  {
+		  // This switch statement maps the appropriate errorLED struct fault flag to the errorLEDptr so that we can clear or set it.
+		  // To add more faults simply add more case statements.  Remember there is a maximum number of faults that can be displayed.
+		  switch (monitor_gpio[input])
+		  {
+		  case SOC_IN0:
+			  errorLEDptr = &errorLED.fault6;
+			  break;
+		  case SOC_IN3:
+			  errorLEDptr = &errorLED.fault7;
+			  break;
+		  case SOC_IN8:
+			  errorLEDptr = &errorLED.fault8;
+			  break;
+		  case SOC_IN11:
+			  errorLEDptr = &errorLED.fault9;
+			  break;
+		  default:
+			  break;
+		  }
+		  // If the voltage level is above the low fault threshold then clear the fault flag.
+		  if (gpioInputBuf[monitor_gpio[input]] == gpio_thresholds[input])
+		  {
+			  *errorLEDptr = true;
+		  }
+		  else
+		  {
+			  *errorLEDptr = false;
+		  }
 	  }
+
+//	  if(*(presentADCValues+Adc.adc0) > VSYS_FLT){
+//		  errorLED.vsysPMIFault=false;
+//	  }
+//	  else{
+//		  errorLED.vsysPMIFault=true;
+//	  }
 	  if((!ZION.SOC_EEPROM_Detected && ZION.zionFinished) || (ZION.SOC_BoardFab <0)){
 		  errorLED.zionFault=true;
 	  }

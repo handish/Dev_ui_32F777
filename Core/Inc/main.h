@@ -353,8 +353,46 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 #define FAULT9				11
 
 
-// Thresholds for FAULTS
+// Falling Edge Thresholds for FAULTS
 #define VSYS_FLT			3.5
+#define V1_FLT				0.3
+#define	V2_FLT				0.5
+#define	V3_FLT				0.9
+
+// Input GPIO Fault Level Thresholds.
+#define SOC_IN0_FLT			1
+#define SOC_IN1_FLT			0
+#define SOC_IN2_FLT			1
+#define SOC_IN3_FLT			0
+#define SOC_IN4_FLT			1
+#define SOC_IN5_FLT			0
+#define SOC_IN6_FLT			1
+#define SOC_IN7_FLT			0
+#define SOC_IN8_FLT			1
+#define SOC_IN9_FLT			0
+#define SOC_IN10_FLT		1
+#define SOC_IN11_FLT		0
+
+// Platform voltage to ADC channel mapping defines
+#define VSYS				0
+#define	V1					1
+#define V2					2
+#define V3					3
+
+// Platform GPIO Input to STM GPIO mapping
+#define SOC_IN0				0
+#define	SOC_IN1				1
+#define	SOC_IN2				2
+#define	SOC_IN3				3
+#define	SOC_IN4				4
+#define	SOC_IN5				5
+#define	SOC_IN6				6
+#define	SOC_IN7				7
+#define	SOC_IN8				8
+#define	SOC_IN9				9
+#define	SOC_IN10			10
+#define	SOC_IN11			11
+
 
 
 //spare SPI definitions
@@ -456,18 +494,18 @@ struct socI2cVoltageMux{
 static struct socI2cVoltageMux socI2cVoltageMux = {0x4C << 1, 0x14 , 0x15, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F ,0x10, 3};
 
 struct inputGPIOs{
-	int input0;
-	int input1;
-	int input2;
-	int input3;
-	int input4;
-	int input5;
-	int input6;
-	int input7;
-	int input8;
-	int input9;
-	int input10;
-	int input11;
+	uint8_t input0;
+	uint8_t input1;
+	uint8_t input2;
+	uint8_t input3;
+	uint8_t input4;
+	uint8_t input5;
+	uint8_t input6;
+	uint8_t input7;
+	uint8_t input8;
+	uint8_t input9;
+	uint8_t input10;
+	uint8_t input11;
 };
 static struct inputGPIOs inputGPIOs = {0,1,2,3,4,5,6,7,8,9,10,11};
 

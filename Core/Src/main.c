@@ -251,6 +251,7 @@ void setVoltageMux(int comChannel, int voltageChannel, int clear);
 void winbondSPIDeviceIDRead(SPI_HandleTypeDef hspi, uint8_t* data);
 void spareUartTransmitRead(char *message);
 uint8_t debugUartParser();
+uint8_t * socUartParser();
 //void LCD_DrawSomeLinesSingleLine();
 //void LCD_DrawSomeLinesBatchLine();
 //void LCD_BlackWhite(int color);
@@ -2205,6 +2206,57 @@ uint8_t debugUartParser(){
 		return false;
 	}
 }
+
+uint8_t * socUartParser(){
+	int x;
+	uint8_t  key_uint8[4];
+	static uint8_t var_Seen[15];
+	memset(var_Seen,0x00,sizeof(var_Seen));
+	static uint8_t failure[15];
+	memset(failure, 0xff,sizeof(failure));
+	key_uint8[0] = (uint8_t)'F';
+	key_uint8[1] = (uint8_t)'F';
+	key_uint8[2] = (uint8_t)'U';
+	key_uint8[3] = (uint8_t)':';
+	//memcpy(key_uint8,(const uint8_t*)key, 4);
+	x=5;
+	int ffuBytes=4;
+	for(x=0;x<sizeof(soc_Uart_RX_Buf);x++){
+		if(soc_Uart_RX_Buf[x]==key_uint8[0] && var_Seen[0]==0){
+			var_Seen[0] = 1;
+		}
+		else if(soc_Uart_RX_Buf[x]==key_uint8[1] && var_Seen[0]){
+			var_Seen[1] = 1;
+		}
+		else if(soc_Uart_RX_Buf[x]==key_uint8[2] && var_Seen[1]){
+			var_Seen[2] = 1;
+		}
+		else if(soc_Uart_RX_Buf[x]==key_uint8[3] && var_Seen[2]){
+			var_Seen[3] = 1;
+			//break;
+		}
+		else if(var_Seen[3]){
+			if(ffuBytes<sizeof(var_Seen)){
+				var_Seen[ffuBytes] = soc_Uart_RX_Buf[x];
+				ffuBytes++;
+			}
+			else{
+				break;
+			}
+		}
+		else{
+			memset(var_Seen,0x00,sizeof(var_Seen));
+		}
+	}
+	if(var_Seen[3]){
+
+		memset(soc_Uart_RX_Buf,0x00,sizeof(soc_Uart_RX_Buf));
+		return var_Seen;
+	}
+	else{
+		return failure;
+	}
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_startHeartbeat */
@@ -2958,10 +3010,20 @@ void startBootButtons(void *argument)
 void startSocUart(void *argument)
 {
   /* USER CODE BEGIN startSocUart */
+	uint8_t * receivedBytes;
+	uint8_t values[11];
   /* Infinite loop */
   for(;;)
   {
-    osDelay(10000);
+	  receivedBytes = socUartParser();
+	  if((*receivedBytes) != 0xff){
+		  for(int x=4;x<15;x++){
+			  values[x-4] = *(receivedBytes+x);
+		  }
+		  int x=0;
+	  }
+	  //int x = 0;
+    osDelay(400);
   }
   /* USER CODE END startSocUart */
 }

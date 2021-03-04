@@ -568,7 +568,7 @@ void drawStatusMenu(int indicator){
 		if(i2cCheck == HAL_OK){
 			LCD_PutStr(i, j, "Present", fnt7x10);
 			// Clear the HAL fault LED.
-			errorLED.fault9 = false;
+			//errorLED.fault9 = false;
 		}
 		else{
 			LCD_PutStr(i, j, "Undetected", fnt7x10);

@@ -2551,12 +2551,14 @@ void startErrorLEDs(void *argument)
 	float * presentADCValues;
 
 	// An array of voltage rails that are monitored for faults.  Each element maps to the apporpriate ADC channel for monitoring
+	// PLATFORM TEMPLATE: edit this array to include the voltages that you would like to monitor for faults.  The names are defined in main.h
 	uint8_t monitor_rails[] = {VSYS, V1, V2, V3};
 
-	// An array of falling edge fault thresholds for the voltage rails that are monitored for faults.
+	// An array of falling edge fault thresholds for the voltage rails that are monitored for faults.  Size of the array and index for each fault should match the voltage name in monitor_rails[].
 	double monitor_fault_thresholds[] = {VSYS_FLT, V1_FLT, V2_FLT, V3_FLT};
 
 	// An array of platform gpio inputs that are monitored for faults.  Each element maps to the appropriate STM GPIO input for monitoring
+	// PLATFORM TEMPLATE: edit this array to include the voltages that you would like to monitor for faults.  The names are defined in main.h
 	uint8_t monitor_gpio[] = {SOC_IN0, SOC_IN3, SOC_IN8, SOC_IN11};
 
 	// An array of logic fault thresholds for the GPIO input rails that are monitored for faults.  The fault thresholds should match the mapping used in monitor_gpio[].

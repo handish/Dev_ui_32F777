@@ -353,13 +353,29 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 #define FAULT9				11
 
 
-// Falling Edge Thresholds for FAULTS
+// Falling Edge Thresholds for FAULTS.  Add more #defines to add additional fault thresholds for more ADC channels.
+// PLATFORM TEMPLATE: Rename these defines names to voltage rails names that match your platform.  Leave the "_FLT" suffic.
+// PLATFORM TEMPLATE: Choose appropriate falling edge thresholds for your platform.
 #define VSYS_FLT			3.5
 #define V1_FLT				0.3
 #define	V2_FLT				0.5
 #define	V3_FLT				0.9
+#define	V4_FLT				1.8
+#define	V5_FLT				1.8
+#define	V6_FLT				1.8
+#define	V7_FLT				1.8
+#define	V8_FLT				1.8
+#define	V9_FLT				1.8
+#define	V10_FLT				1.8
+#define	V11_FLT				1.8
+#define	V12_FLT				1.8
+#define	V13_FLT				1.8
+#define	V14_FLT				1.8
+#define	V15_FLT				1.8
 
 // Input GPIO Fault Level Thresholds.
+// PLATFORM TEMPLATE: Rename these defines names to logic I/O names that match your platform.  Leave the "_FLT" suffix.
+// PLATFORM TEMPLATE: Choose appropriate HI/LO fault level for each I/O for your platform.
 #define SOC_IN0_FLT			1
 #define SOC_IN1_FLT			0
 #define SOC_IN2_FLT			1
@@ -373,13 +389,28 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 #define SOC_IN10_FLT		1
 #define SOC_IN11_FLT		0
 
-// Platform voltage to ADC channel mapping defines
+// Platform voltage to ADC channel mapping defines.
+// There are currently a max of 16 ADC channels on DevUI.
+// PLATFORM TEMPLATE: Rename these defines names to voltage rails names that match your platform.
 #define VSYS				0
 #define	V1					1
 #define V2					2
 #define V3					3
+#define V4					4
+#define V5					5
+#define V6					6
+#define V7					7
+#define V8					8
+#define V9					9
+#define V10					10
+#define V11					11
+#define V12					12
+#define V13					13
+#define V14					14
+#define V15					15
 
-// Platform GPIO Input to STM GPIO mapping
+// Platform GPIO Input to STM GPIO mapping.  There are a max of 12 GPIO inputs on the DevUI.
+// PLATFORM TEMPLATE: Rename these defines names to logic I/O names that match your platform.
 #define SOC_IN0				0
 #define	SOC_IN1				1
 #define	SOC_IN2				2

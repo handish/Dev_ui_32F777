@@ -255,12 +255,12 @@ void drawStatusMenu(int indicator){
 		i=10;
 		j=95;
 
-		i+= LCD_PutStr(i, j, "ZION FLT: ", fnt7x10);
+		i+= LCD_PutStr(i, j, FAULT1_LBL, fnt7x10);
 		if(errorLED.zionFault){
-			LCD_PutStr(i, j, "SOC ZION ERROR", fnt7x10);
+			LCD_PutStr(i, j, " SOC ZION ERROR", fnt7x10);
 		}
 		else{
-			LCD_PutStr(i, j, "Clear", fnt7x10);
+			LCD_PutStr(i, j, " Clear", fnt7x10);
 		}
 		i=daughterCardAlignment;
 		i+= LCD_PutStr(i, j, "SOC: ", fnt7x10);
@@ -272,12 +272,12 @@ void drawStatusMenu(int indicator){
 		}
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "VSYS_PMI: ", fnt7x10);
+		i+= LCD_PutStr(i, j, FAULT2_LBL, fnt7x10);
 		if(errorLED.vsysPMIFault){
-			LCD_PutStr(i, j, "VSYS PMI LOW", fnt7x10);
+			LCD_PutStr(i, j, " VSYS PMI LOW", fnt7x10);
 		}
 		else{
-			LCD_PutStr(i, j, "Clear", fnt7x10);
+			LCD_PutStr(i, j, " Clear", fnt7x10);
 		}
 		i=daughterCardAlignment;
 		i+= LCD_PutStr(i, j, "ASIC: ", fnt7x10);
@@ -289,12 +289,12 @@ void drawStatusMenu(int indicator){
 		}
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault3: ", fnt7x10);
+		i+= LCD_PutStr(i, j, FAULT3_LBL, fnt7x10);
 		if(errorLED.fault3){
-			LCD_PutStr(i, j, "FAULT 3 Triggered", fnt7x10);
+			LCD_PutStr(i, j, " FAULT 3 Triggered", fnt7x10);
 		}
 		else{
-			LCD_PutStr(i, j, "Clear", fnt7x10);
+			LCD_PutStr(i, j, " Clear", fnt7x10);
 		}
 		i=daughterCardAlignment;
 		i+= LCD_PutStr(i, j, "Display: ", fnt7x10);
@@ -307,49 +307,49 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault4: ", fnt7x10);
+		i+= LCD_PutStr(i, j, FAULT4_LBL, fnt7x10);
 		if(errorLED.fault4){
-			LCD_PutStr(i, j, "FAULT 4 Triggered", fnt7x10);
+			LCD_PutStr(i, j, " FAULT 4 Triggered", fnt7x10);
 		}
 		else{
-			LCD_PutStr(i, j, "Clear", fnt7x10);
+			LCD_PutStr(i, j, " Clear", fnt7x10);
 		}
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault5: ", fnt7x10);
+		i+= LCD_PutStr(i, j, FAULT5_LBL, fnt7x10);
 		if(errorLED.fault5){
-			LCD_PutStr(i, j, "FAULT 5 Triggered", fnt7x10);
+			LCD_PutStr(i, j, " FAULT 5 Triggered", fnt7x10);
 		}
 		else{
-			LCD_PutStr(i, j, "Clear", fnt7x10);
+			LCD_PutStr(i, j, " Clear", fnt7x10);
 		}
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault6: ", fnt7x10);
+		i+= LCD_PutStr(i, j, FAULT6_LBL, fnt7x10);
 		if(errorLED.fault6){
-			LCD_PutStr(i, j, "FAULT 6 Triggered", fnt7x10);
+			LCD_PutStr(i, j, " FAULT 6 Triggered", fnt7x10);
 		}
 		else{
-			LCD_PutStr(i, j, "Clear", fnt7x10);
+			LCD_PutStr(i, j, " Clear", fnt7x10);
 		}
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault7: ", fnt7x10);
+		i+= LCD_PutStr(i, j, FAULT7_LBL, fnt7x10);
 		if(errorLED.fault7){
-			LCD_PutStr(i, j, "FAULT 7 Triggered", fnt7x10);
+			LCD_PutStr(i, j, " FAULT 7 Triggered", fnt7x10);
 		}
 		else{
-			LCD_PutStr(i, j, "Clear", fnt7x10);
+			LCD_PutStr(i, j, " Clear", fnt7x10);
 		}
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault8: ", fnt7x10);
+		i+= LCD_PutStr(i, j, FAULT8_LBL, fnt7x10);
 		if(errorLED.fault8){
-			LCD_PutStr(i, j, "FAULT 8 Triggered", fnt7x10);
+			LCD_PutStr(i, j, " FAULT 8 Triggered", fnt7x10);
 		}
 		else{
 			LCD_PutStr(i, j, "Clear", fnt7x10);
@@ -357,12 +357,12 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "Fault9: ", fnt7x10);
+		i+= LCD_PutStr(i, j, FAULT9_LBL, fnt7x10);
 		if(errorLED.fault9){
-			LCD_PutStr(i, j, "FAULT 9 Triggered", fnt7x10);
+			LCD_PutStr(i, j, " FAULT 9 Triggered", fnt7x10);
 		}
 		else{
-			LCD_PutStr(i, j, "Clear", fnt7x10);
+			LCD_PutStr(i, j, " Clear", fnt7x10);
 		}
 
 
@@ -394,10 +394,10 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j=95;
-		i+= LCD_PutStr(i, j, "AI0: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI0, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc0];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10)+adjacentSpacing;
-		i+= LCD_PutStr(i, j, "AI9: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI9, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc9];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10);
 		i=inputGpioAlignment;
@@ -409,10 +409,10 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "AI1: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI1, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc1];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10)+adjacentSpacing;
-		i+= LCD_PutStr(i, j, "AI10: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI10, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc10];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10);
 		i=inputGpioAlignment;
@@ -423,10 +423,10 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "AI2: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI2, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc2];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10)+adjacentSpacing;
-		i+= LCD_PutStr(i, j, "AI11: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI11, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc11];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10);
 		i=inputGpioAlignment;
@@ -437,10 +437,10 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "AI3: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI3, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc3];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10)+adjacentSpacing;
-		i+= LCD_PutStr(i, j, "AI12: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI12, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc12];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10);
 		i=inputGpioAlignment;
@@ -450,10 +450,10 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "AI4: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI4, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc4];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10)+adjacentSpacing;
-		i+= LCD_PutStr(i, j, "AI13: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI13, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc13];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10);
 		i=inputGpioAlignment;
@@ -462,10 +462,10 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "AI5: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI5, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc5];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10)+adjacentSpacing;
-		i+= LCD_PutStr(i, j, "AI14: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI14, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc14];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10);
 		i=inputGpioAlignment;
@@ -474,10 +474,10 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "AI6: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI6, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc6];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10)+adjacentSpacing;
-		i+= LCD_PutStr(i, j, "AI15: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI15, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc15];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10);
 		i=inputGpioAlignment;
@@ -486,7 +486,7 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "AI7: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI7, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc7];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10);
 		i=inputGpioAlignment;
@@ -495,7 +495,7 @@ void drawStatusMenu(int indicator){
 
 		i=10;
 		j+=15;
-		i+= LCD_PutStr(i, j, "AI8: ", fnt7x10);
+		i+= LCD_PutStr(i, j, AI8, fnt7x10);
 		convertedFloat = 1000 * displayAdcValues[Adc.adc8];
 		i+=LCD_PutIntF(i, j, convertedFloat, 3, fnt7x10);
 		i=inputGpioAlignment;

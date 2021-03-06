@@ -356,22 +356,22 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 // Falling Edge Thresholds for FAULTS.  Add more #defines to add additional fault thresholds for more ADC channels.
 // PLATFORM TEMPLATE: Rename these defines names to voltage rails names that match your platform.  Leave the "_FLT" suffic.
 // PLATFORM TEMPLATE: Choose appropriate falling edge thresholds for your platform.
-#define VSYS_FLT			3.5
-#define V1_FLT				0.3
-#define	V2_FLT				0.5
-#define	V3_FLT				0.9
-#define	V4_FLT				1.8
-#define	V5_FLT				1.8
-#define	V6_FLT				1.8
-#define	V7_FLT				1.8
-#define	V8_FLT				1.8
-#define	V9_FLT				1.8
-#define	V10_FLT				1.8
-#define	V11_FLT				1.8
-#define	V12_FLT				1.8
-#define	V13_FLT				1.8
-#define	V14_FLT				1.8
-#define	V15_FLT				1.8
+#define VSYS_FLT				3.5
+#define	VREG_BOB_FLT			3.3
+#define VREG_S5A_FLT			1.824
+#define VREG_S6C_FLT			1.264
+#define VREG_S4E_FLT			0.752
+#define VDDMX_FLT				0.348
+#define LPI_MX_FLT				0.5
+#define VDDA_EBI_FLT			0.348
+#define VDD_CX_FLT				0.348
+#define VDD_MM_FLT				0.348
+#define SSC_CX_FLT				0.348
+#define SERDES_1P2_FLT			1.2
+#define CORE_UFS_PCIE_FLT		0.88
+#define CORE_USB_FLT			0.912
+#define VREG_S5E_FLT			1.824
+#define VREG_1P8_FLT			1.8
 
 // Input GPIO Fault Level Thresholds.
 // PLATFORM TEMPLATE: Rename these defines names to logic I/O names that match your platform.  Leave the "_FLT" suffix.
@@ -393,21 +393,21 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 // There are currently a max of 16 ADC channels on DevUI.
 // PLATFORM TEMPLATE: Rename these defines names to voltage rails names that match your platform.
 #define VSYS				0
-#define	V1					1
-#define V2					2
-#define V3					3
-#define V4					4
-#define V5					5
-#define V6					6
-#define V7					7
-#define V8					8
-#define V9					9
-#define V10					10
-#define V11					11
-#define V12					12
-#define V13					13
-#define V14					14
-#define V15					15
+#define	VREG_BOB			1
+#define VREG_S5A			2
+#define VREG_S6C			3
+#define VREG_S4E			4
+#define VDDMX				5
+#define LPI_MX				6
+#define VDDA_EBI			7
+#define VDD_CX				8
+#define VDD_MM				9
+#define SSC_CX				10
+#define SERDES_1P2			11
+#define CORE_UFS_PCIE		12
+#define CORE_USB			13
+#define VREG_S5E			14
+#define VREG_1P8			15
 
 // Platform GPIO Input to STM GPIO mapping.  There are a max of 12 GPIO inputs on the DevUI.
 // PLATFORM TEMPLATE: Rename these defines names to logic I/O names that match your platform.
@@ -423,8 +423,6 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 #define	SOC_IN9				9
 #define	SOC_IN10			10
 #define	SOC_IN11			11
-
-
 
 //spare SPI definitions
 #define SPARE_SS_ON 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,ON);

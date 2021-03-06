@@ -369,7 +369,8 @@ int main(void)
     setErrorLED(9,OFF);
 
     printf("Welcome to DevUI!\r\n");
-    printf("DevUI SW Version: 1.0\r\n");
+    printf("DevUI SW Version: 0.0.1\r\n");
+
 //    BTN0_ON;
 //    HAL_Delay(300);
 //    BTN1_ON;
@@ -2607,10 +2608,10 @@ void startErrorLEDs(void *argument)
 
 	// An array of voltage rails that are monitored for faults.  Each element maps to the apporpriate ADC channel for monitoring
 	// PLATFORM TEMPLATE: edit this array to include the voltages that you would like to monitor for faults.  The names are defined in main.h
-	uint8_t monitor_rails[] = {VSYS, V1, V2, V3};
+	uint8_t monitor_rails[] = {VSYS, VREG_BOB, VREG_S5A, VREG_S6C};
 
 	// An array of falling edge fault thresholds for the voltage rails that are monitored for faults.  Size of the array and index for each fault should match the voltage name in monitor_rails[].
-	double monitor_fault_thresholds[] = {VSYS_FLT, V1_FLT, V2_FLT, V3_FLT};
+	double monitor_fault_thresholds[] = {VSYS_FLT, VREG_BOB_FLT, VREG_S5A_FLT, VREG_S6C_FLT};
 
 	// An array of platform gpio inputs that are monitored for faults.  Each element maps to the appropriate STM GPIO input for monitoring
 	// PLATFORM TEMPLATE: edit this array to include the voltages that you would like to monitor for faults.  The names are defined in main.h
@@ -2636,18 +2637,19 @@ void startErrorLEDs(void *argument)
 	  {
 		  // This switch statement maps the appropriate errorLED struct fault flag to the errorLEDptr so that we can clear or set it.
 		  // To add more faults simply add more case statements.
+		  // PLATFORM TEMPLATE: edit the switch statement labels to match the entries in monitor_rails[] array.
 		  switch (monitor_rails[rail])
 		  {
 		  case VSYS:
 			  errorLEDptr = &errorLED.vsysPMIFault;
 			  break;
-		  case V1:
+		  case VREG_BOB:
 			  errorLEDptr = &errorLED.fault3;
 			  break;
-		  case V2:
+		  case VREG_S5A:
 			  errorLEDptr = &errorLED.fault4;
 			  break;
-		  case V3:
+		  case VREG_S6C:
 			  errorLEDptr = &errorLED.fault5;
 			  break;
 		  default:
@@ -2669,6 +2671,7 @@ void startErrorLEDs(void *argument)
 	  {
 		  // This switch statement maps the appropriate errorLED struct fault flag to the errorLEDptr so that we can clear or set it.
 		  // To add more faults simply add more case statements.  Remember there is a maximum number of faults that can be displayed.
+		  // PLATFORM TEMPLATE: edit the switch statement labels to match the entries in monitor_gpio[] array.
 		  switch (monitor_gpio[input])
 		  {
 		  case SOC_IN0:

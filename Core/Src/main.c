@@ -2943,10 +2943,16 @@ void startBootButtons(void *argument)
 				  EX_SW_ON;
 				  pwrBtnReady=1;
 			  }
-			  setOutputGPIOState(outputGPIOs.odOut_0, OFF); //set the reset GPIO.
+			  BTN0_ON;
+			  //setOutputGPIOState(outputGPIOs.odOut_0, OFF); //set the reset GPIO.
+			  osDelay(13000);
+			  BTN0_OFF;
+			  osDelay(300);
+			  BTN0_ON;
 			  osDelay(500);
-			  setOutputGPIOState(outputGPIOs.odOut_0, ON); //turn off the reset GPIO
-			  osDelay(500);
+			  BTN0_OFF;
+			  //setOutputGPIOState(outputGPIOs.odOut_0, ON); //turn off the reset GPIO
+			  osDelay(4000);
 			  BTN1_OFF;
 			  BTN2_OFF;
 			  BTN3_OFF;
@@ -2990,11 +2996,14 @@ void startBootButtons(void *argument)
 			  if((bootButtons.btn0) || pwrBtnReady){ //power button
 				  BTN0_ON;
 				  timeTurnedOn = (HAL_GetTick());
-				  pwrBtnReady=0;
+				  //pwrBtnReady=0;
 				  pwrOn = 1;
 				  osDelay(500);
 				  BTN0_OFF;
-				  osDelay(500);
+				  if(pwrBtnReady){
+					  pwrBtnReady=0;
+					  osDelay(4000);
+				  }
 				  pwrOn=0;
 				  timeTurnedOn=0;
 				  if(bootButtons.btn0){

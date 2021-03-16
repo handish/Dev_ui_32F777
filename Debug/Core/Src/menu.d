@@ -45,7 +45,10 @@ Core/Src/menu.o: ../Core/Src/menu.c ../Core/Inc/menu.h ../Core/Inc/main.h \
  C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/digits8x16.h \
  ../Core/Inc/ls027b7dh01.h \
  C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/bitmaps.h \
- C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/font_digits.h
+ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/font_digits.h \
+ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/ProjectFiles/Inc/Atlas.h \
+ ../Core/Inc/main.h \
+ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/ProjectFiles/Inc/default.h
 
 ../Core/Inc/menu.h:
 
@@ -148,3 +151,9 @@ C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/digits8x16.h:
 C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/bitmaps.h:
 
 C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/Graphics/font_digits.h:
+
+C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/ProjectFiles/Inc/Atlas.h:
+
+../Core/Inc/main.h:
+
+C:/Users/auphilli/STM32CubeIDE/workspace_1.5.1/Dev_ui/ProjectFiles/Inc/default.h:

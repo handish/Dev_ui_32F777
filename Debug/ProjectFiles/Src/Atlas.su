@@ -1,0 +1,16 @@
+Atlas.c:20:6:atlasMainMenuFaultLedLabels	32	static
+Atlas.c:77:6:atlasMainMenuBootModes	16	static
+Atlas.c:106:5:atlasBootMenuBootModes	64	static
+Atlas.c:302:6:atlasSystemInfoSoc	16	static
+Atlas.c:330:6:atlasSystemInfoAsic	16	static
+Atlas.c:357:6:atlasSystemInfoDisplay	16	static
+Atlas.c:384:6:atlasSystemInfoPV	24	static
+Atlas.c:397:6:atlasSystemInfoWIFI	24	static
+Atlas.c:411:6:atlasSystemInfoWIGIG	24	static
+Atlas.c:424:6:atlasSystemInfoCODEC	24	static
+Atlas.c:437:6:atlasSystemInfoRF	24	static
+Atlas.c:450:5:atlasHeaderFaults	24	static
+Atlas.c:491:6:atlasStatusADCsAndGPIOs	48	static
+Atlas.c:627:6:atlasStatusFaults	32	static
+Atlas.c:756:5:atlasBootButtons	32	static
+Atlas.c:968:6:atlasErrorLEDs	88	static

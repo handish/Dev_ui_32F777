@@ -68,7 +68,8 @@ extern DMA_HandleTypeDef hdma_uart7_rx;
 extern TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN EV */
-extern uint8_t adcRestart[3];
+extern struct adcState adcStates;
+//extern uint8_t adcRestart[3];
 extern uint8_t inputButtonSet;
 static struct buttonPriority{
 	int up;
@@ -207,7 +208,6 @@ void DMA1_Stream0_IRQHandler(void)
   /* USER CODE END DMA1_Stream0_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_uart5_rx);
   /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
-  int x=0;
   /* USER CODE END DMA1_Stream0_IRQn 1 */
 }
 
@@ -261,12 +261,12 @@ void ADC_IRQHandler(void)
 void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-	uint8_t buttonStates[3];
+	//uint8_t buttonStates[3];
 	int currentTicks = HAL_GetTick();
 	int currentDiff = currentTicks-timestamp;
-	buttonStates[0] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_5);
-	buttonStates[1] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_6);
-	buttonStates[2] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_7);
+	//buttonStates[0] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_5);
+	//buttonStates[1] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_6);
+	//buttonStates[2] = HAL_GPIO_ReadPin(GPIOK,GPIO_PIN_7);
 	if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_5) && (currentDiff>150)){ //up button
 		if(inputButtonSet > buttonPriority.up){
 			inputButtonSet = buttonPriority.up;
@@ -316,7 +316,7 @@ void DMA2_Stream0_IRQHandler(void)
   HAL_DMA_IRQHandler(&hdma_adc1);
   /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
   HAL_ADC_Stop_DMA(&hadc1);
-  adcRestart[0]=1;
+  adcStates.adcBank1Finished=1;
   /* USER CODE END DMA2_Stream0_IRQn 1 */
 }
 
@@ -331,7 +331,7 @@ void DMA2_Stream1_IRQHandler(void)
   HAL_DMA_IRQHandler(&hdma_adc3);
   /* USER CODE BEGIN DMA2_Stream1_IRQn 1 */
   HAL_ADC_Stop_DMA(&hadc3);
-  adcRestart[2]=1;
+  adcStates.adcBank3Finished=1;
   /* USER CODE END DMA2_Stream1_IRQn 1 */
 }
 
@@ -346,7 +346,7 @@ void DMA2_Stream2_IRQHandler(void)
   HAL_DMA_IRQHandler(&hdma_adc2);
   /* USER CODE BEGIN DMA2_Stream2_IRQn 1 */
   HAL_ADC_Stop_DMA(&hadc2);
-  adcRestart[1]=1;
+  adcStates.adcBank2Finished=1;
   /* USER CODE END DMA2_Stream2_IRQn 1 */
 }
 

@@ -1,0 +1,11 @@
+default.c:13:6:defaultMainMenuFaultLedLabels	32	static
+default.c:64:6:defaultMainMenuBootModes	16	static
+default.c:78:5:defaultBootMenuBootModes	56	static
+default.c:224:6:defaultSystemInfoSoc	16	static
+default.c:237:6:defaultSystemInfoAsic	16	static
+default.c:250:6:defaultSystemInfoDisplay	16	static
+default.c:263:5:defaultHeaderFaults	24	static
+default.c:302:6:defaultStatusADCsAndGPIOs	40	static
+default.c:423:6:defaultStatusFaults	32	static
+default.c:549:5:defaultBootButtons	24	static
+default.c:642:6:defaultErrorLEDs	48	static

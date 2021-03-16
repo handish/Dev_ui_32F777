@@ -1,5 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
+# Toolchain: GNU Tools for STM32 (9-2020-q2-update)
 ################################################################################
 
 -include ../makefile.init
@@ -8,6 +9,7 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include ProjectFiles/Src/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/MemMang/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM7/r0p1/subdir.mk
 -include Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/subdir.mk
@@ -31,6 +33,12 @@ endif
 endif
 
 -include ../makefile.defs
+
+OPTIONAL_TOOL_DEPS := \
+$(wildcard ../makefile.defs) \
+$(wildcard ../makefile.init) \
+$(wildcard ../makefile.targets) \
+
 
 BUILD_ARTIFACT_NAME := Dev_ui
 BUILD_ARTIFACT_EXTENSION := elf
@@ -58,22 +66,22 @@ all: main-build
 main-build: Dev_ui.elf secondary-outputs
 
 # Tool invocations
-Dev_ui.elf: $(OBJS) $(USER_OBJS) C:\Users\auphilli\STM32CubeIDE\workspace_1.5.1\Dev_ui\STM32F777NIHX_FLASH.ld
+Dev_ui.elf: $(OBJS) $(USER_OBJS) C:\Users\auphilli\STM32CubeIDE\workspace_1.5.1\Dev_ui\STM32F777NIHX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	arm-none-eabi-gcc -o "Dev_ui.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\auphilli\STM32CubeIDE\workspace_1.5.1\Dev_ui\STM32F777NIHX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Dev_ui.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv5-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
-default.size.stdout: $(EXECUTABLES)
+default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	arm-none-eabi-size  $(EXECUTABLES)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Dev_ui.list: $(EXECUTABLES)
+Dev_ui.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Dev_ui.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Dev_ui.bin: $(EXECUTABLES)
+Dev_ui.bin: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	arm-none-eabi-objcopy  -O binary $(EXECUTABLES) "Dev_ui.bin"
 	@echo 'Finished building: $@'
 	@echo ' '

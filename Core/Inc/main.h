@@ -36,6 +36,7 @@ extern "C" {
 #include "ls027b7dh01.h"
 #include "menu.h"
 #include "zionEeprom.h"
+#include <stdio.h>
 
 // Graphical resources
 #include "font5x7.h"
@@ -291,6 +292,7 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 #define EX_SW_ON		HAL_GPIO_WritePin(SPARE_SW_EN_GPIO_Port,SPARE_SW_EN_Pin,ON)
 #define EX_SW_OFF		HAL_GPIO_WritePin(SPARE_SW_EN_GPIO_Port,SPARE_SW_EN_Pin,OFF)
 
+
 /* Navigation control defines */
 #define MENU_TOP							1
 #define MAX_MENU_ITEMS_MAIN_MENU			3
@@ -326,103 +328,16 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 #define COMA				0
 #define COMB				1
 
-//Fault LEDs
-#define ZION_FAULT 			0
-#define VSYSPMI_FAULT		1
 
 
-//MODE LEDs
-#define BOOT_FAULT_LED			7
-#define STANDARD_LED			8
-#define EDL_LED					9
-#define UEFI_LED				9
-
-//MODE LED / RGB LED output defines
-#define RED						7
-#define	GREEN					8
-#define	BLUE					9
 
 
-//placeholder defines for other fault LEDs
-#define FAULT3				2
-#define FAULT4				3
-#define FAULT5				4
-#define FAULT6				5
-#define FAULT7				6
-#define FAULT8				10
-#define FAULT9				11
-
-
-// Falling Edge Thresholds for FAULTS.  Add more #defines to add additional fault thresholds for more ADC channels.
-// PLATFORM TEMPLATE: Rename these defines names to voltage rails names that match your platform.  Leave the "_FLT" suffic.
-// PLATFORM TEMPLATE: Choose appropriate falling edge thresholds for your platform.
-#define VSYS_FLT				3.5
-#define	VREG_BOB_FLT			3.3
-#define VREG_S5A_FLT			1.824
-#define VREG_S6C_FLT			1.264
-#define VREG_S4E_FLT			0.752
-#define VDDMX_FLT				0.348
-#define LPI_MX_FLT				0.5
-#define VDDA_EBI_FLT			0.348
-#define VDD_CX_FLT				0.348
-#define VDD_MM_FLT				0.348
-#define SSC_CX_FLT				0.348
-#define SERDES_1P2_FLT			1.2
-#define CORE_UFS_PCIE_FLT		0.88
-#define CORE_USB_FLT			0.912
-#define VREG_S5E_FLT			1.824
-#define VREG_1P8_FLT			1.8
-
-// Input GPIO Fault Level Thresholds.
-// PLATFORM TEMPLATE: Rename these defines names to logic I/O names that match your platform.  Leave the "_FLT" suffix.
-// PLATFORM TEMPLATE: Choose appropriate HI/LO fault level for each I/O for your platform.
-#define SOC_IN0_FLT			1
-#define SOC_IN1_FLT			0
-#define SOC_IN2_FLT			1
-#define SOC_IN3_FLT			0
-#define SOC_IN4_FLT			1
-#define SOC_IN5_FLT			0
-#define SOC_IN6_FLT			1
-#define SOC_IN7_FLT			0
-#define SOC_IN8_FLT			1
-#define SOC_IN9_FLT			0
-#define SOC_IN10_FLT		1
-#define SOC_IN11_FLT		0
-
-// Platform voltage to ADC channel mapping defines.
-// There are currently a max of 16 ADC channels on DevUI.
-// PLATFORM TEMPLATE: Rename these defines names to voltage rails names that match your platform.
-#define VSYS				0
-#define	VREG_BOB			1
-#define VREG_S5A			2
-#define VREG_S6C			3
-#define VREG_S4E			4
-#define VDDMX				5
-#define LPI_MX				6
-#define VDDA_EBI			7
-#define VDD_CX				8
-#define VDD_MM				9
-#define SSC_CX				10
-#define SERDES_1P2			11
-#define CORE_UFS_PCIE		12
-#define CORE_USB			13
-#define VREG_S5E			14
-#define VREG_1P8			15
-
-// Platform GPIO Input to STM GPIO mapping.  There are a max of 12 GPIO inputs on the DevUI.
-// PLATFORM TEMPLATE: Rename these defines names to logic I/O names that match your platform.
-#define SOC_IN0				0
-#define	SOC_IN1				1
-#define	SOC_IN2				2
-#define	SOC_IN3				3
-#define	SOC_IN4				4
-#define	SOC_IN5				5
-#define	SOC_IN6				6
-#define	SOC_IN7				7
-#define	SOC_IN8				8
-#define	SOC_IN9				9
-#define	SOC_IN10			10
-#define	SOC_IN11			11
+//ATLAS gpio INPUT DEFINTIONS
+#define PV_PRSNT			0
+#define	WIFI_PRSNT			1
+#define WIGIG_PRSNT			2
+#define CODEC_PRSNT			3
+#define RF_PRSNT			4
 
 //spare SPI definitions
 #define SPARE_SS_ON 		HAL_GPIO_WritePin(SPARE_SS_L_3V3_GPIO_Port,SPARE_SS_L_3V3_Pin,ON);
@@ -584,6 +499,12 @@ struct Adc{
 	int systemResistorDivider;
 };
 static struct Adc Adc = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 ,19, 20, 3.3/4096, 3,2};
+
+struct adcState{
+	uint8_t adcBank1Finished;
+	uint8_t adcBank2Finished;
+	uint8_t adcBank3Finished;
+};
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

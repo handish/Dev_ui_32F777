@@ -160,6 +160,8 @@ uint16_t adc2_buf[ADC_BUF_LEN];
 uint16_t adc3_buf[ADC_BUF_LEN];
 
 struct adcState adcStates = {0,0,0};
+#define ADC_FINISHED			(adcStates.adcBank1Finished && adcStates.adcBank2Finished && adcStates.adcBank3Finished)
+
 uint8_t adcRestart[3];
 
 //SOC I2C Variables
@@ -193,6 +195,7 @@ struct zion ZION = {0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 struct bootModeButtons bootButtons = {0,0,0,0,0,0,0,0,0,0};
 
 struct errorLEDs errorLED = {0,0,0,0,0,0,0,0,0,0,0,0,0};
+
 
 
 
@@ -362,20 +365,20 @@ int main(void)
   configureLEDDriver();
   
     setErrorLED(0,ON);
-    HAL_Delay(1000);
+    HAL_Delay(400);
     setErrorLED(1,OFF);
     setErrorLED(8,ON);
-    HAL_Delay(1000);
+    HAL_Delay(400);
     setErrorLED(8,OFF);
     setErrorLED(9,ON);
-    HAL_Delay(1000);
+    HAL_Delay(400);
     setErrorLED(8,ON);
     setErrorLED(9,ON);
-    HAL_Delay(1000);
+    HAL_Delay(400);
     setErrorLED(9,OFF);
 
-    printf("Welcome to DevUI!\r\n");
-    printf("DevUI SW Version: 0.0.1\r\n");
+    //printf("Welcome to DevUI!\r\n");
+    //printf("DevUI SW Version: 0.0.1\r\n");
 
 //    BTN0_ON;
 //    HAL_Delay(300);
@@ -1670,7 +1673,7 @@ void DevUI_Error_Handler(char *msg, HAL_StatusTypeDef ErrorCode, uint8_t err_par
 
 int __io_putchar(int ch)
 {
-	HAL_UART_Transmit(&huart7, (uint8_t *)&ch, 1, 0xFFFF);
+	HAL_UART_Transmit(&huart7, (uint8_t *)&ch, 1, 100);
 
 	return ch;
 }
@@ -2283,9 +2286,19 @@ void startHeartbeat(void *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
+	int x=0;
   for(;;)
   {
 	  HAL_GPIO_TogglePin(GPIOI,MCU_HEARTBEAT_Pin);
+	  //display needs to alternate EXCOMM to avoid burn in.
+	  if(x){
+		  LCD_EXCOMM_L;
+		  x=0;
+	  }
+	  else{
+		  LCD_EXCOMM_H
+		  x=1;
+	  }
 	  //spareUartTransmitRead("YOYOYO!\r\n");
 	  osDelay(500);
   }
@@ -2349,16 +2362,12 @@ void GetDaScreenBlink(void *argument)
 {
   /* USER CODE BEGIN GetDaScreenBlink */
   /* Infinite loop */
-//	 int x = 0;
-//	 float *adcValues;
-//	 HAL_StatusTypeDef ret;
 	 initializeDisplay();
 	 uint32_t ulNotifiedValue;
 	 uint8_t button_val = 0;
 	 uint8_t menu_val = 0;
 	 uint8_t running_menu = 0;
-//	 int *readI2c;
-//	 int zionCleared=0;
+
 	   for(;;)
 	   {
 	 	  ulNotifiedValue = 0;
@@ -2375,7 +2384,8 @@ void GetDaScreenBlink(void *argument)
 
 	 	  //readI2c = parseZionEEPROM(SOC_ADDRESS);
 	 	  //int blah = *(readI2c+4);
-//		  HAL_GPIO_WritePin(ZION_PWR_EN_GPIO_Port,ZION_PWR_EN_Pin,1);
+	 	  int x = 0;
+//	 	  HAL_GPIO_WritePin(ZION_PWR_EN_GPIO_Port,ZION_PWR_EN_Pin,1);
 //	 	  writeZionBinaries();
 //	 	  readI2c = parseZionEEPROM(ASIC_ADDRESS);
 //	 	  int blah = *(readI2c);
@@ -2395,6 +2405,7 @@ void GetDaScreenBlink(void *argument)
 //	 	  printf(readI2c[0]);
 //	 	  readDataFromEEPROM((uint8_t*)readI2c,DISPLAY_ADDRESS,0x0,sizeof(readI2c), 500);
 //	 	  printf(readI2c[0]);
+	 	  x = 0;
 
 	 	  //binaryToArray(readBinary,"Kanu");
 //	 	  printf(*readI2c);
@@ -2644,171 +2655,6 @@ void startErrorLEDs(void *argument)
 	  else{
 		  defaultErrorLEDs();
 	  }
-//	  R = false;
-//	  G = false;
-//	  B = false;
-//	  // Check that the ADC are available, and if they are, retrieve the last recorded ADC outputs.
-//	  if(adcStates.adcBank1Finished && adcStates.adcBank2Finished && adcStates.adcBank3Finished){
-//		  presentADCValues = getADCValues();
-//	  }
-//
-//	  // Iterate through all the ADC channels that are monitored for faults
-//	  for (uint8_t rail = 0; rail < sizeof(monitor_rails)/sizeof(monitor_rails[0]); rail++)
-//	  {
-//		  // This switch statement maps the appropriate errorLED struct fault flag to the errorLEDptr so that we can clear or set it.
-//		  // To add more faults simply add more case statements.
-//		  // PLATFORM TEMPLATE: edit the switch statement labels to match the entries in monitor_rails[] array.
-//		  switch (monitor_rails[rail])
-//		  {
-//		  case VSYS:
-//			  errorLEDptr = &errorLED.vsysPMIFault;
-//			  break;
-//		  case VREG_BOB:
-//			  errorLEDptr = &errorLED.fault3;
-//			  break;
-//		  case VREG_S5A:
-//			  errorLEDptr = &errorLED.fault4;
-//			  break;
-//		  case VREG_S6C:
-//			  errorLEDptr = &errorLED.fault5;
-//			  break;
-//		  default:
-//			  break;
-//		  }
-//		  // If the voltage level is above the low fault threshold then clear the fault flag.
-//		  if (*(presentADCValues+monitor_rails[rail]) > monitor_fault_thresholds[rail])
-//		  {
-//			  *errorLEDptr = false;
-//		  }
-//		  else
-//		  {
-//			  *errorLEDptr = true;
-//		  }
-//	  }
-//
-//	  // Check GPIO inputs for faults. Iterate through the inputs that are supposed to be monitored for faults.
-//	  for (uint8_t input = 0; input < sizeof(monitor_gpio)/sizeof(monitor_gpio[0]); input++)
-//	  {
-//		  // This switch statement maps the appropriate errorLED struct fault flag to the errorLEDptr so that we can clear or set it.
-//		  // To add more faults simply add more case statements.  Remember there is a maximum number of faults that can be displayed.
-//		  // PLATFORM TEMPLATE: edit the switch statement labels to match the entries in monitor_gpio[] array.
-//		  switch (monitor_gpio[input])
-//		  {
-//		  //case SOC_IN0:
-//		//	  errorLEDptr = &errorLED.fault6;
-//		//	  break;
-//		 // case SOC_IN3:
-//		//	  errorLEDptr = &errorLED.fault7;
-//		//	  break;
-//		 // case SOC_IN8:
-//		//	  errorLEDptr = &errorLED.fault8;
-//		//	  break;
-//		 // case SOC_IN11:
-//		//	  errorLEDptr = &errorLED.fault9;
-//		//	  break;
-//		 // default:
-//		//	  break;
-//		  }
-//		  // If the voltage level is above the low fault threshold then clear the fault flag.
-//		 // if (gpioInputBuf[monitor_gpio[input]] == gpio_thresholds[input])
-//		 // {
-//		//	  *errorLEDptr = true;
-//		 // }
-//		 // else
-//		  //{
-//		//	  *errorLEDptr = false;
-//		 // }
-//	  }
-//
-////	  if(*(presentADCValues+Adc.adc0) > VSYS_FLT){
-////		  errorLED.vsysPMIFault=false;
-////	  }
-////	  else{
-////		  errorLED.vsysPMIFault=true;
-////	  }
-//	  if((!ZION.SOC_EEPROM_Detected && ZION.zionFinished) || (ZION.SOC_BoardFab <0)){
-//		  errorLED.zionFault=true;
-//	  }
-//	  else{
-//		  errorLED.zionFault=false;
-//	  }
-//	  i2cCheck=writeI2CRegister(LED.address, 0xf0, 0x00,1,LED.i2cBank);
-//
-//	  //only allow the error led write commands if the led driver responds.
-//	  if(i2cCheck == HAL_OK)
-//	  {
-//		  errorLED.ledDriver=false;
-//
-//		  switch(bootButtons.bootMode)
-//		  {
-//			case UNINITIALIZED:
-//				errorLED.standard_boot=false;
-//				errorLED.uefi_boot=false;
-//				errorLED.edl_boot=false;
-//				errorLED.boot_fault=false;
-//				R = false;
-//				break;
-//			case STANDARD:
-//				errorLED.standard_boot=true;
-//				errorLED.uefi_boot=false;
-//				errorLED.edl_boot=false;
-//				errorLED.boot_fault=false;
-//				G = true;
-//				break;
-//			case UEFI:
-//				errorLED.standard_boot=false;
-//				errorLED.uefi_boot=true;
-//				errorLED.edl_boot=false;
-//				errorLED.boot_fault=false;
-//				G = true;
-//				B = true;
-//				break;
-//			case EDL:
-//				errorLED.standard_boot=false;
-//				errorLED.uefi_boot=false;
-//				errorLED.edl_boot=true;
-//				errorLED.boot_fault=false;
-//				B = true;
-//				break;
-//			case MASS_STORAGE:
-//				errorLED.standard_boot=true;
-//				errorLED.uefi_boot=false;
-//				errorLED.edl_boot=true;
-//				errorLED.boot_fault=false;
-//				R = true;
-//				B = true;
-//				break;
-//			case RECOVERY:
-//				errorLED.standard_boot=false;
-//				errorLED.uefi_boot=true;
-//				errorLED.edl_boot=true;
-//				errorLED.boot_fault=false;
-//				R = true;
-//				G = true;
-//				break;
-//		  }
-//		  setRGBLED(R,G,B);
-//		  setErrorLED(ZION_FAULT,errorLED.zionFault);
-//		  osDelay(20);
-//		  setErrorLED(VSYSPMI_FAULT, errorLED.vsysPMIFault);
-//		  osDelay(20);
-//		  setErrorLED(FAULT3,errorLED.fault3);
-//		  osDelay(20);
-//		  setErrorLED(FAULT4,errorLED.fault4);
-//		  osDelay(20);
-//		  setErrorLED(FAULT5,errorLED.fault5);
-//		  osDelay(20);
-//		  setErrorLED(FAULT6,errorLED.fault6);
-//		  osDelay(20);
-//		  setErrorLED(FAULT7,errorLED.fault7);
-//		  osDelay(20);
-//		  setErrorLED(FAULT8,errorLED.fault8);
-//		  osDelay(20);
-//		  setErrorLED(FAULT9,errorLED.fault9);
-//	  }
-//	  else
-//		  errorLED.ledDriver = true;
-
     osDelay(500);
   }
   /* USER CODE END startErrorLEDs */
@@ -2834,14 +2680,14 @@ void startZionRead(void *argument)
   for(;;)
   {
 	  if(!ZION.zionFinished){
-		  if (adcStates.adcBank1Finished && adcStates.adcBank2Finished && adcStates.adcBank3Finished){
+		  if (ADC_FINISHED){
 			  adcValuePointer = getADCValues();
 			  zionVoltage = *(adcValuePointer + Adc.zionADC);
 		  }
 		  if(zionVoltage != 77){
 			  if(zionVoltage > 3.0 && (!switchOn)){
 				  int runtime = (HAL_GetTick()/1000);
-				  if(runtime > 15){
+				  if(runtime > 3){
 					  zionEEPROMPresent= zionEEPROMPresence();
 					  if(*zionEEPROMPresent){
 						  ZION.SOC_EEPROM_Detected = 1;
@@ -2943,184 +2789,6 @@ void startBootButtons(void *argument)
 		  else{
 			  pwrBtnReady=defaultBootButtons(pwrBtnReady);
 		  }
-//		  if(bootButtons.bootMode !=0){
-//			  bootButtons.modeClear=0;
-//			  if(bootButtons.btn1){ //DPAD UP
-//				  ATLAS_DPAD_UP_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  if(bootButtons.btn2){ //DPAD RIGHT
-//				  ATLAS_DPAD_RIGHT_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  if(bootButtons.btn3){ //DPAD LEFT
-//				  ATLAS_DPAD_LEFT_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  if(bootButtons.btn4){ //DPAD DOWN
-//				  ATLAS_DPAD_DOWN_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  if(bootButtons.btn5){
-//				  BTN5_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  if(bootButtons.edl_sw){
-//				  ATLAS_EDL_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  if(bootButtons.ex_sw){
-//				  EX_SW_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  ATLAS_PWR_ON;
-//			  //setOutputGPIOState(outputGPIOs.odOut_0, OFF); //set the reset GPIO.
-//			  osDelay(13000);
-//			  ATLAS_PWR_OFF;
-//			  osDelay(300);
-//			  ATLAS_PWR_ON;
-//			  osDelay(500);
-//			  ATLAS_PWR_OFF;
-//			  //setOutputGPIOState(outputGPIOs.odOut_0, ON); //turn off the reset GPIO
-//			  osDelay(4000);
-//			  ATLAS_DPAD_UP_OFF;
-//			  ATLAS_DPAD_RIGHT_OFF;
-//			  ATLAS_DPAD_LEFT_OFF;
-//			  ATLAS_DPAD_DOWN_OFF;
-//			  BTN5_OFF;
-//			  ATLAS_EDL_OFF;
-//			  EX_SW_OFF;
-//			  if(bootButtons.btn1){
-//				  bootButtons.bootMode= RECOVERY;
-//				  //errorLEDState[RECOVERY_LED]=1;
-//			  }
-//			  else if(bootButtons.btn2){
-//				  bootButtons.bootMode= MASS_STORAGE;
-//				 // errorLEDState[MASS_STORAGE_LED]=1;
-//			  }
-//			  else if(bootButtons.btn3){
-//				  bootButtons.bootMode= UEFI;
-//				  //errorLEDState[UEFI_LED]=1;
-//			  }
-//			  else if(bootButtons.edl_sw){
-//				  bootButtons.bootMode= EDL;
-//				  //errorLEDState[EDL_LED]=1;
-//			  }
-//			  else{
-//				  bootButtons.bootMode=STANDARD;
-//				  //errorLEDState[STANDARD_LED]=1;
-//			  }
-//			  bootButtons.btn0=0;
-//			  bootButtons.btn1=0;
-//			  bootButtons.btn2=0;
-//			  bootButtons.btn3=0;
-//			  bootButtons.btn4=0;
-//			  bootButtons.btn5=0;
-//			  bootButtons.edl_sw=0;
-//			  bootButtons.ex_sw=0;
-//			  bootButtons.modeClear=1;
-//			  bootButtons.bootModeSet=0;
-//
-//		  }
-//		  else{
-//			  bootButtons.modeClear=0;
-//			  if((bootButtons.btn0) || pwrBtnReady){ //power button
-//				  ATLAS_PWR_ON;
-//				  timeTurnedOn = (HAL_GetTick());
-//				  //pwrBtnReady=0;
-//				  //pwrOn = 1;
-//				  osDelay(500);
-//				  ATLAS_PWR_OFF;
-//				  if(pwrBtnReady){
-//					  pwrBtnReady=0;
-//					  osDelay(4000);
-//				  }
-//				  //pwrOn=0;
-//				  timeTurnedOn=0;
-//				  if(bootButtons.btn0){
-//					  bootButtons.bootMode= STANDARD;
-//				  }
-//				  else if(bootButtons.btn1){
-//					  bootButtons.bootMode= RECOVERY;
-//				  }
-//				  else if(bootButtons.btn2){
-//					  bootButtons.bootMode= MASS_STORAGE;
-//				  }
-//				  else if(bootButtons.btn3){
-//					  bootButtons.bootMode= UEFI;
-//				  }
-//				  else if(bootButtons.edl_sw){
-//					  bootButtons.bootMode= EDL;
-//				  }
-//				  bootButtons.btn0=0;
-//				  bootButtons.btn1=0;
-//				  bootButtons.btn2=0;
-//				  bootButtons.btn3=0;
-//				  bootButtons.btn4=0;
-//				  bootButtons.btn5=0;
-//				  bootButtons.edl_sw=0;
-//				  bootButtons.ex_sw=0;
-//				  bootButtons.modeClear=1;
-//				  bootButtons.bootModeSet=0;
-//				  //osDelay(300);
-//			  }
-//			  if(bootButtons.btn1){ //DPAD UP
-//				  ATLAS_DPAD_UP_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  else if(!(bootButtons.btn1)){ //DPAD UP
-//				  ATLAS_DPAD_UP_OFF;
-//				  //osDelay(300);
-//			  }
-//			  if(bootButtons.btn2){ //DPAD RIGHT
-//				  ATLAS_DPAD_RIGHT_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  else if(!(bootButtons.btn2)){ //DPAD RIGHT
-//				  ATLAS_DPAD_RIGHT_OFF;
-//				  //osDelay(300);
-//			  }
-//			  if(bootButtons.btn3){ //DPAD LEFT
-//				  ATLAS_DPAD_LEFT_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  else if(!(bootButtons.btn3)){ //DPAD LEFT
-//				  ATLAS_DPAD_LEFT_OFF;
-//				  //osDelay(300);
-//			  }
-//			  if(bootButtons.btn4){
-//				  ATLAS_DPAD_DOWN_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  else if(!(bootButtons.btn4)){
-//				  ATLAS_DPAD_DOWN_OFF;
-//				  osDelay(300);
-//			  }
-//			  if(bootButtons.btn5){
-//				  BTN5_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  else if(!(bootButtons.btn5)){
-//				  BTN5_OFF;
-//				  //osDelay(300);
-//			  }
-//			  if(bootButtons.edl_sw){
-//				  ATLAS_EDL_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  else if(!(bootButtons.edl_sw)){
-//				  ATLAS_EDL_OFF;
-//				  //osDelay(300);
-//			  }
-//			  if(bootButtons.ex_sw){
-//				  EX_SW_ON;
-//				  pwrBtnReady=1;
-//			  }
-//			  else if(!(bootButtons.ex_sw)){
-//				  EX_SW_OFF;
-//				  //osDelay(300);
-//			  }
-//		  }
 	  }
     osDelay(800);
   }
@@ -3168,11 +2836,12 @@ void startDebugUart(void *argument)
 	int x;
   /* Infinite loop */
 	float * presentADCValues;
+	float adcValues[21];
 
 
   for(;;)
   {
-	  if(adcStates.adcBank1Finished && adcStates.adcBank2Finished && adcStates.adcBank3Finished){
+	  if(ADC_FINISHED){
 		  presentADCValues = getADCValues();
 
 	  }
@@ -3181,7 +2850,8 @@ void startDebugUart(void *argument)
 		  char buf[5];
 		  debugUartTransmitChar("ADCValues:");
 		  for(x=0;x<21;x++){
-			  sprintf(buf, "%f", *(presentADCValues+x));
+			  adcValues[x]=*(presentADCValues+x);
+			  sprintf(buf, "%f", adcValues[x]);
 			  //snprintf(buf, 5, "%f", *(presentADCValues+x));
 			  debugUartTransmitStuff(buf,5);
 			  if(x<20){
@@ -3229,7 +2899,7 @@ void startDebugUart(void *argument)
 		  //HAL_UART_Transmit(&DEBUG_UART,(uint8_t *)bootButtons.bootMode, 1,100);
 		  debugUartTransmitChar("\r\n");
 		  uint8_t zionInfo[9];
-		  debugUartTransmitChar("Zion Info:")
+		  debugUartTransmitChar("Zion Info:");
 		  zionInfo[0] = ZION.SOC_EEPROM_Detected;
 		  zionInfo[1] = ZION.ASIC_EEPROM_Detected;
 		  zionInfo[2] = ZION.DISPLAY_EEPROM_Detected;
@@ -3245,7 +2915,7 @@ void startDebugUart(void *argument)
 			  if(x<(sizeof(zionInfo))-1){
 				  debugUartTransmitChar(",");
 			  }
-		  }
+		 }
 	  }
     osDelay(500);
   }

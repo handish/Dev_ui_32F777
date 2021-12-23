@@ -146,10 +146,6 @@ void drawMainMenu(int indicator){
 void drawStatusMenu(int indicator){
 	int i,j;
 	//float *adcValuePointer;
-	int convertedFloat;
-	int adjacentSpacing = 20;
-	int inputGpioAlignment=245;
-	int daughterCardAlignment=240;
 	int arrowUp = 0;
 	int arrowDown=1;
 	int arrowSize=3;
@@ -526,6 +522,7 @@ void drawBootMenu(int indicator, uint8_t button, int menu){
 			j=110;
 			i=120;
 			bootButtons.bootMode=0;
+			setIndicator=0;
 			LCD_PutStr(i,j, "POWER SWITCH DISABLED!", fnt7x10);
 			j+=14;
 			i=75;

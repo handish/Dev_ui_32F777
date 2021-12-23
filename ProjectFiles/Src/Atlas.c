@@ -112,185 +112,201 @@ int atlasBootMenuBootModes(int indicator, int previousMenu, int menu, int button
 	LCD_PutStr(i,j, "ATLAS RECOGNIZED. PROVIDING ATLAS BOOT MODES:", fnt7x10);
 	j+=30;
 	i=42;
-	LCD_PutStr(i, j, "Please Select Boot Mode:", fnt7x10);
-	i=indentAlignment;
-	j+=bootModeSeparation;
-	LCD_PutStr(i, j, ATLAS_BOOT_STD_MODE, fnt7x10);
-	j+=bootModeSeparation;
-	LCD_PutStr(i, j, ATLAS_BOOT_EDL_MODE, fnt7x10);
-	j+=bootModeSeparation;
-	LCD_PutStr(i, j, ATLAS_BOOT_RECOVERY_MODE, fnt7x10);
-	j+=bootModeSeparation;
-	LCD_PutStr(i, j, ATLAS_BOOT_MASS_STORAGE_MODE, fnt7x10);
-	j+=bootModeSeparation;
-	LCD_PutStr(i, j, ATLAS_BOOT_UEFI_MODE, fnt7x10);
-	i-= arrowLocationAdjustment;
-	if(setIndicator==0){
-		switch(indicator){
-		case FIRST:
-		{
-			j=95;
-			if((button == SEL) & (previousMenu == menu)){
+	if(bootButtons.bootMode == EDL){
+		j=110;
+		i=20;
+		i+=LCD_PutStr(i,j, "DEVICE IN EDL AND CAN'T BE REBOOTED NORMALLY!", fnt7x10);
+		j+=13;
+		LCD_FillRect(15, j, i + 5, j + 3);
+		j+=24;
+		i=108;
+		LCD_PutStr(i,j, "Flip Power Switch to", fnt7x10);
+		j+=14;
+		i=90;
+		LCD_PutStr(i,j, "Enable Standard Boot Modes!", fnt7x10);
+
+	}
+	else{
+		LCD_PutStr(i, j, "Please Select Boot Mode:", fnt7x10);
+		i=indentAlignment;
+		j+=bootModeSeparation;
+		LCD_PutStr(i, j, ATLAS_BOOT_STD_MODE, fnt7x10);
+		j+=bootModeSeparation;
+		LCD_PutStr(i, j, ATLAS_BOOT_EDL_MODE, fnt7x10);
+		j+=bootModeSeparation;
+		LCD_PutStr(i, j, ATLAS_BOOT_RECOVERY_MODE, fnt7x10);
+		j+=bootModeSeparation;
+		LCD_PutStr(i, j, ATLAS_BOOT_MASS_STORAGE_MODE, fnt7x10);
+		j+=bootModeSeparation;
+		LCD_PutStr(i, j, ATLAS_BOOT_UEFI_MODE, fnt7x10);
+		i-= arrowLocationAdjustment;
+		if(setIndicator==0){
+			switch(indicator){
+			case FIRST:
+			{
+				j=95;
+				if((button == SEL) & (previousMenu == menu)){
+					i=140;
+					drawUpDownArrow(i, j+5, 3, 3);
+					bootButtons.btn0=1;
+					bootButtons.bootModeSet=1;
+					setIndicator=1;
+					timeNow = (HAL_GetTick()/1000);
+				}
+
+				break;
+			}
+			case SECOND:
+			{
+				j=115;
+				if((button == SEL) & (previousMenu == menu)){
+					i=220;
+					drawUpDownArrow(i, j+5, 3, 3);
+					bootButtons.edl_sw=1;
+					bootButtons.bootModeSet=1;
+					setIndicator=2;
+					timeNow = (HAL_GetTick()/1000);
+				}
+
+				break;
+			}
+			case THIRD:
+			{
+				j=135;
+				if((button == SEL) & (previousMenu == menu)){
+					i=130;
+					drawUpDownArrow(i, j+5, 3, 3);
+					bootButtons.btn1=1;
+					bootButtons.bootModeSet=1;
+					setIndicator=3;
+					timeNow = (HAL_GetTick()/1000);
+				}
+
+				break;
+			}
+			case FOURTH:
+			{
+				j=155;
+				if((button == SEL) & (previousMenu == menu)){
+					i=160;
+					drawUpDownArrow(i, j+5, 3, 3);
+					bootButtons.btn2=1;
+					bootButtons.bootModeSet=1;
+					setIndicator=4;
+					timeNow = (HAL_GetTick()/1000);
+				}
+
+				break;
+			}
+			case FIFTH:
+			{
+				j=175;
+				if((button == SEL) & (previousMenu == menu)){
+					i=100;
+					drawUpDownArrow(i, j+5, 3, 3);
+					bootButtons.btn3=1;
+					bootButtons.bootModeSet=1;
+					setIndicator=5;
+					timeNow = (HAL_GetTick()/1000);
+				}
+
+				break;
+			}
+			default:
+			{
+				j=95;
+				break;
+			}
+			}
+		}
+
+		else{
+			i = 230;
+			j = 120;
+			int timeLeft=0;
+			//add a small countdown so that people don't get too bored. The times below are captured experimentally based off TRIDENT
+			//booting to OS is simplier/quicker as we don't need to hold other buttons until the system recognizes what happened.
+			if(bootButtons.bootMode==0){
+				if(setIndicator==FIRST){
+					timeLeft = (timeNow+3)- (HAL_GetTick()/1000);
+				}
+				else{
+					timeLeft = (timeNow+6)- (HAL_GetTick()/1000);
+				}
+			}
+			else{
+				if(setIndicator==FIRST){
+					timeLeft = (timeNow+15)- (HAL_GetTick()/1000);
+				}
+				else{
+					timeLeft = (timeNow+19)- (HAL_GetTick()/1000);
+				}
+			}
+			i+=LCD_PutIntF(i, j, timeLeft, 0, fnt_dig_big);;
+			LCD_PutStr(i, j, " SECS LEFT", fnt7x10);
+			switch(setIndicator){
+			//draw an arrow pointing at the boot option called until the modeClear flag is set by the bootButtons task.
+			case FIRST:
+			{
+				j=95;
 				i=140;
 				drawUpDownArrow(i, j+5, 3, 3);
-				bootButtons.btn0=1;
-				bootButtons.bootModeSet=1;
-				setIndicator=1;
-				timeNow = (HAL_GetTick()/1000);
+				if(bootButtons.modeClear){
+					setIndicator=0;
+					bootButtons.modeClear=0;
+				}
+				break;
 			}
-
-			break;
-		}
-		case SECOND:
-		{
-			j=115;
-			if((button == SEL) & (previousMenu == menu)){
+			case SECOND:
+			{
+				j=115;
 				i=220;
 				drawUpDownArrow(i, j+5, 3, 3);
-				bootButtons.edl_sw=1;
-				bootButtons.bootModeSet=1;
-				setIndicator=2;
-				timeNow = (HAL_GetTick()/1000);
+				if(bootButtons.modeClear){
+					setIndicator=0;
+					bootButtons.modeClear=0;
+				}
+				break;
 			}
-
-			break;
-		}
-		case THIRD:
-		{
-			j=135;
-			if((button == SEL) & (previousMenu == menu)){
+			case THIRD:
+			{
+				j=135;
 				i=130;
 				drawUpDownArrow(i, j+5, 3, 3);
-				bootButtons.btn1=1;
-				bootButtons.bootModeSet=1;
-				setIndicator=3;
-				timeNow = (HAL_GetTick()/1000);
+				if(bootButtons.modeClear){
+					setIndicator=0;
+					bootButtons.modeClear=0;
+				}
+				break;
 			}
-
-			break;
-		}
-		case FOURTH:
-		{
-			j=155;
-			if((button == SEL) & (previousMenu == menu)){
+			case FOURTH:
+			{
+				j=155;
 				i=160;
 				drawUpDownArrow(i, j+5, 3, 3);
-				bootButtons.btn2=1;
-				bootButtons.bootModeSet=1;
-				setIndicator=4;
-				timeNow = (HAL_GetTick()/1000);
+				if(bootButtons.modeClear){
+					setIndicator=0;
+					bootButtons.modeClear=0;
+				}
+				break;
 			}
-
-			break;
-		}
-		case FIFTH:
-		{
-			j=175;
-			if((button == SEL) & (previousMenu == menu)){
+			case FIFTH:
+			{
+				j=175;
 				i=100;
 				drawUpDownArrow(i, j+5, 3, 3);
-				bootButtons.btn3=1;
-				bootButtons.bootModeSet=1;
-				setIndicator=5;
-				timeNow = (HAL_GetTick()/1000);
+				if(bootButtons.modeClear){
+					setIndicator=0;
+					bootButtons.modeClear=0;
+				}
+				break;
 			}
-
-			break;
-		}
-		default:
-		{
-			j=95;
-			break;
-		}
-		}
-	}
-
-	else{
-		i = 230;
-		j = 120;
-		int timeLeft=0;
-		//add a small countdown so that people don't get too bored. The times below are captured experimentally based off TRIDENT
-		//booting to OS is simplier/quicker as we don't need to hold other buttons until the system recognizes what happened.
-		if(bootButtons.bootMode==0){
-			if(setIndicator==FIRST){
-				timeLeft = (timeNow+2)- (HAL_GetTick()/1000);
+			default:
+			{
+				drawUpDownArrow(i, j+5, 3, 3);
+				break;
 			}
-			else{
-				timeLeft = (timeNow+6)- (HAL_GetTick()/1000);
 			}
-		}
-		else{
-			if(setIndicator==FIRST){
-				timeLeft = (timeNow+15)- (HAL_GetTick()/1000);
-			}
-			else{
-				timeLeft = (timeNow+19)- (HAL_GetTick()/1000);
-			}
-		}
-		i+=LCD_PutIntF(i, j, timeLeft, 0, fnt_dig_big);;
-		LCD_PutStr(i, j, " SECS LEFT", fnt7x10);
-		switch(setIndicator){
-		//draw an arrow pointing at the boot option called until the modeClear flag is set by the bootButtons task.
-		case FIRST:
-		{
-			j=95;
-			i=140;
-			drawUpDownArrow(i, j+5, 3, 3);
-			if(bootButtons.modeClear){
-				setIndicator=0;
-				bootButtons.modeClear=0;
-			}
-			break;
-		}
-		case SECOND:
-		{
-			j=115;
-			i=220;
-			drawUpDownArrow(i, j+5, 3, 3);
-			if(bootButtons.modeClear){
-				setIndicator=0;
-				bootButtons.modeClear=0;
-			}
-			break;
-		}
-		case THIRD:
-		{
-			j=135;
-			i=130;
-			drawUpDownArrow(i, j+5, 3, 3);
-			if(bootButtons.modeClear){
-				setIndicator=0;
-				bootButtons.modeClear=0;
-			}
-			break;
-		}
-		case FOURTH:
-		{
-			j=155;
-			i=160;
-			drawUpDownArrow(i, j+5, 3, 3);
-			if(bootButtons.modeClear){
-				setIndicator=0;
-				bootButtons.modeClear=0;
-			}
-			break;
-		}
-		case FIFTH:
-		{
-			j=175;
-			i=100;
-			drawUpDownArrow(i, j+5, 3, 3);
-			if(bootButtons.modeClear){
-				setIndicator=0;
-				bootButtons.modeClear=0;
-			}
-			break;
-		}
-		default:
-		{
-			drawUpDownArrow(i, j+5, 3, 3);
-			break;
-		}
 		}
 	}
 	return j;
